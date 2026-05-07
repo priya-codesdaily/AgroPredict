@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../services/mandi_service.dart';
 import '../models/crop_model.dart';
 import 'price_result_screen.dart';
@@ -15,17 +16,71 @@ class _HomeScreenState extends State<HomeScreen> {
   final _stateController = TextEditingController();
   bool _isLoading = false;
   bool _isHindi = false;
+  bool _isListening = false;
+  final SpeechToText _speech = SpeechToText();
 
   final List<String> _popularCrops = [
     'Mango', 'Rice', 'Wheat', 'Tomato',
     'Potato', 'Onion', 'Cotton', 'Soybean'
   ];
 
+  final Map<String, String> _cropHindi = {
+    'Mango': 'आम',
+    'Rice': 'चावल',
+    'Wheat': 'गेहूं',
+    'Tomato': 'टमाटर',
+    'Potato': 'आलू',
+    'Onion': 'प्याज',
+    'Cotton': 'कपास',
+    'Soybean': 'सोयाबीन',
+  };
+
+  Future<void> _startListening() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          setState(() => _isListening = false);
+        }
+      },
+      onError: (error) => setState(() => _isListening = false),
+    );
+
+    if (available) {
+      setState(() => _isListening = true);
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            _cropController.text = result.recognizedWords;
+          });
+        },
+        localeId: _isHindi ? 'hi_IN' : 'en_IN',
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isHindi
+                ? 'माइक्रोफोन उपलब्ध नहीं है'
+                : 'Microphone not available'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _stopListening() {
+    _speech.stop();
+    setState(() => _isListening = false);
+  }
+
   Future<void> _search() async {
     if (_cropController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isHindi ? 'कृपया फसल का नाम दर्ज करें' : 'Please enter a crop name'),
+          content: Text(_isHindi
+              ? 'कृपया फसल का नाम दर्ज करें'
+              : 'Please enter a crop name'),
           backgroundColor: Colors.red,
         ),
       );
@@ -97,18 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           )),
                       Text(
                         _isHindi ? 'AI फसल मूल्य सहायक' : 'AI Crop Price Intelligence',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF52B788),
-                        ),
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF52B788)),
                       ),
                     ],
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-
-              // Status + Language Toggle Row
               Row(
                 children: [
                   Container(
@@ -127,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // Language Toggle
                   GestureDetector(
                     onTap: () => setState(() => _isHindi = false),
                     child: Container(
@@ -162,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -177,8 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Text(
                         _isHindi
-                            ? 'फसल का नाम डालें और जानें कहाँ बेचें, कितने में बेचें।'
-                            : 'Enter any crop to see live mandi prices and get AI-powered sell advice.',
+                            ? 'फसल का नाम डालें या बोलें और जानें कहाँ बेचें।'
+                            : 'Type or speak crop name to see live mandi prices.',
                         style: const TextStyle(
                             color: Color(0xFF95D5B2), fontSize: 13, height: 1.4),
                       ),
@@ -187,7 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
               Text(
                 _isHindi ? 'फसल का नाम' : 'CROP NAME',
                 style: const TextStyle(
@@ -215,10 +262,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderSide: const BorderSide(color: Color(0xFF52B788), width: 1.5),
                   ),
                   prefixIcon: const Icon(Icons.grass, color: Color(0xFF52B788)),
+                  suffixIcon: GestureDetector(
+                    onTap: _isListening ? _stopListening : _startListening,
+                    child: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                      color: _isListening ? Colors.redAccent : const Color(0xFF52B788),
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 8),
+              if (_isListening)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.mic, color: Colors.redAccent, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isHindi ? 'सुन रहा हूँ... बोलिए' : 'Listening... speak now',
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 16),
-
               Text(
                 _isHindi ? 'राज्य (वैकल्पिक)' : 'STATE (OPTIONAL)',
                 style: const TextStyle(
@@ -249,7 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
               GestureDetector(
                 onTap: _isLoading ? null : _search,
                 child: Container(
@@ -274,7 +346,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-
               Text(
                 _isHindi ? 'लोकप्रिय फसलें' : 'POPULAR CROPS',
                 style: const TextStyle(
@@ -299,15 +370,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         border: Border.all(
                             color: const Color(0xFF52B788).withOpacity(0.3)),
                       ),
-                      child: Text(crop,
-                          style: const TextStyle(
-                              color: Color(0xFF95D5B2), fontSize: 13)),
+                      child: Text(
+                        _isHindi ? (_cropHindi[crop] ?? crop) : crop,
+                        style: const TextStyle(
+                            color: Color(0xFF95D5B2), fontSize: 13)),
                     ),
                   );
                 }).toList(),
               ),
               const SizedBox(height: 30),
-
               Center(
                 child: Text(
                   _isHindi
@@ -328,6 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _cropController.dispose();
     _stateController.dispose();
+    _speech.stop();
     super.dispose();
   }
 }
