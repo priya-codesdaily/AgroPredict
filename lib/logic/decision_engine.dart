@@ -1,15 +1,16 @@
-﻿import '../models/crop_model.dart';
+import '../models/crop_model.dart';
 
 class DecisionEngine {
+  
+  // Full decision with reasoning
   static Map<String, dynamic> analyze(List<CropPrice> prices) {
     if (prices.isEmpty) {
       return {
         'advice': 'NEUTRAL',
         'bestMandi': null,
-        'avgPrice': 0.0,
+        'netProfit': 0.0,
         'percentAboveAvg': 0.0,
         'reasons': ['No data available'],
-        'mandiCount': 0,
       };
     }
 
@@ -23,6 +24,7 @@ class DecisionEngine {
     double percentAboveAvg =
         ((bestMandi.modalPrice - avgPrice) / avgPrice) * 100;
 
+    // Decision logic
     String advice;
     if (percentAboveAvg > 20) {
       advice = 'SELL';
@@ -36,6 +38,7 @@ class DecisionEngine {
       advice = 'NEUTRAL';
     }
 
+    // Reasoning
     List<String> reasons = [];
     if (advice == 'SELL') {
       reasons.add('Price is ${percentAboveAvg.toStringAsFixed(0)}% above market average');
@@ -60,6 +63,7 @@ class DecisionEngine {
     };
   }
 
+  // Transport profit check
   static Map<String, dynamic> calculateProfit({
     required double price,
     required double quantity,
