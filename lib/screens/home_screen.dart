@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/mandi_service.dart';
 import '../models/crop_model.dart';
 import '../models/crop_varieties.dart';
@@ -21,6 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedVariety = '';
   bool _showVarieties = false;
   List<String> _currentVarieties = [];
+  double? _userLat;
+  double? _userLng;
+  bool _locationLoaded = false;
 
   final List<String> _popularCrops = [
     'Mango', 'Rice', 'Wheat', 'Tomato',
@@ -32,6 +36,40 @@ class _HomeScreenState extends State<HomeScreen> {
     'Tomato': 'टमाटर', 'Potato': 'आलू', 'Onion': 'प्याज',
     'Cotton': 'कपास', 'Soybean': 'सोयाबीन',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
+  }
+
+  Future<void> _getUserLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _locationLoaded = true);
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _locationLoaded = true);
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      );
+      setState(() {
+        _userLat = position.latitude;
+        _userLng = position.longitude;
+        _locationLoaded = true;
+      });
+    } catch (e) {
+      setState(() => _locationLoaded = true);
+    }
+  }
 
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
@@ -120,6 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
             cropName: displayName,
             prices: prices,
             isHindi: _isHindi,
+            userLat: _userLat,
+            userLng: _userLng,
           ),
         ),
       );
@@ -172,6 +212,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Location indicator
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _userLat != null ? Icons.location_on : Icons.location_off,
+                          color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _userLat != null
+                              ? (_isHindi ? 'GPS चालू' : 'GPS ON')
+                              : (_isHindi ? 'GPS बंद' : 'GPS OFF'),
+                          style: TextStyle(
+                              color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                              fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
                   const Spacer(),
                   GestureDetector(
                     onTap: () => setState(() => _isHindi = false),
@@ -217,8 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Text(
                         _isHindi
-                            ? 'फसल का नाम डालें या बोलें — किस्म भी चुन सकते हैं'
-                            : 'Type or speak crop name — select variety for better results',
+                            ? 'फसल का नाम डालें — किस्म चुनें — GPS से पास की मंडी देखें'
+                            : 'Enter crop name — select variety — GPS finds nearest mandi',
                         style: const TextStyle(color: Color(0xFF95D5B2), fontSize: 13, height: 1.4),
                       ),
                     ),
@@ -397,3 +461,4 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 }
+

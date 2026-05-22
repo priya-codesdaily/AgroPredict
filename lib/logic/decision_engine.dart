@@ -1,4 +1,6 @@
-﻿import '../models/crop_model.dart';
+﻿import 'package:geolocator/geolocator.dart';
+import '../models/crop_model.dart';
+import '../data/mandi_locations.dart';
 
 class DecisionEngine {
   static Map<String, dynamic> analyze(List<CropPrice> prices) {
@@ -97,5 +99,47 @@ class DecisionEngine {
       'profitPerQuintal': profitPerQuintal,
       'worthIt': worthIt,
     };
+  }
+
+  static List<Map<String, dynamic>> getMandisWithDistance(
+      List<CropPrice> prices, double userLat, double userLng) {
+    List<Map<String, dynamic>> result = [];
+    for (final price in prices) {
+      final coords = MandiLocations.getCoordinates(price.market);
+      double? distance;
+      if (coords != null) {
+        distance = Geolocator.distanceBetween(
+          userLat, userLng,
+          coords['lat']!, coords['lng']!,
+        ) / 1000;
+      }
+      result.add({
+        'price': price,
+        'distance': distance,
+        'hasLocation': coords != null,
+      });
+    }
+    result.sort((a, b) {
+      if (a['distance'] == null && b['distance'] == null) return 0;
+      if (a['distance'] == null) return 1;
+      if (b['distance'] == null) return -1;
+      return (a['distance'] as double).compareTo(b['distance'] as double);
+    });
+    return result;
+  }
+
+  static Map<String, dynamic>? getBestNearbyMandi(
+      List<CropPrice> prices, double userLat, double userLng,
+      {double maxKm = 500}) {
+    final mandisWithDist = getMandisWithDistance(prices, userLat, userLng);
+    final nearby = mandisWithDist.where((m) =>
+        m['distance'] == null || (m['distance'] as double) <= maxKm).toList();
+    if (nearby.isEmpty) return null;
+    nearby.sort((a, b) {
+      final priceA = (a['price'] as CropPrice).modalPrice;
+      final priceB = (b['price'] as CropPrice).modalPrice;
+      return priceB.compareTo(priceA);
+    });
+    return nearby.first;
   }
 }

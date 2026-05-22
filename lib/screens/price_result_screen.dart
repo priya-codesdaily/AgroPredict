@@ -7,12 +7,16 @@ class PriceResultScreen extends StatefulWidget {
   final String cropName;
   final List<CropPrice> prices;
   final bool isHindi;
+  final double? userLat;
+  final double? userLng;
 
   const PriceResultScreen({
     super.key,
     required this.cropName,
     required this.prices,
     this.isHindi = false,
+    this.userLat,
+    this.userLng,
   });
 
   @override
@@ -54,13 +58,22 @@ class _PriceResultScreenState extends State<PriceResultScreen>
     final String smartLine = decision['smartLine'] as String;
     final String smartLineHindi = decision['smartLineHindi'] as String;
 
-    Color ac = advice == 'SELL' ? Colors.redAccent : advice == 'WAIT' ? const Color(0xFF52B788) : Colors.orangeAccent;
+    Color ac = advice == 'SELL'
+        ? Colors.redAccent
+        : advice == 'WAIT'
+            ? const Color(0xFF52B788)
+            : Colors.orangeAccent;
+
     String emoji = advice == 'SELL' ? '📉' : advice == 'WAIT' ? '📈' : '➡️';
-    String title = advice == 'SELL' ? (widget.isHindi ? 'अभी बेचो' : 'SELL NOW')
-        : advice == 'WAIT' ? (widget.isHindi ? 'रुको' : 'WAIT')
-        : (widget.isHindi ? 'नज़र रखो' : 'MONITOR');
+    String title = advice == 'SELL'
+        ? (widget.isHindi ? 'अभी बेचो' : 'SELL NOW')
+        : advice == 'WAIT'
+            ? (widget.isHindi ? 'रुको' : 'WAIT')
+            : (widget.isHindi ? 'नज़र रखो' : 'MONITOR');
     String sub = advice == 'SELL'
-        ? (widget.isHindi ? '${best?.market ?? ''} में सबसे अच्छा दाम\nवहाँ जाकर बेचो' : 'Best price at ${best?.market ?? ''}\nSell your crop there now')
+        ? (widget.isHindi
+            ? '${best?.market ?? ''} में सबसे अच्छा दाम\nवहाँ जाकर बेचो'
+            : 'Best price at ${best?.market ?? ''}\nSell your crop there now')
         : advice == 'WAIT'
             ? (widget.isHindi ? 'दाम बढ़ रहे हैं\n5-7 दिन और रुको' : 'Prices rising\nWait 5-7 more days')
             : (widget.isHindi ? 'दाम एक जैसे हैं\n2-3 दिन देखो' : 'Prices stable\nMonitor 2-3 days');
@@ -91,7 +104,9 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 border: Border.all(color: const Color(0xFF52B788).withOpacity(0.4)),
               ),
               child: Text(
-                _showPerKg ? (widget.isHindi ? '₹/किलो' : '₹/kg') : (widget.isHindi ? '₹/क्विंटल' : '₹/qtl'),
+                _showPerKg
+                    ? (widget.isHindi ? '₹/किलो' : '₹/kg')
+                    : (widget.isHindi ? '₹/क्विंटल' : '₹/qtl'),
                 style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
@@ -135,7 +150,8 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                       const SizedBox(height: 10),
                       Text(title, style: TextStyle(color: ac, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 1)),
                       const SizedBox(height: 8),
-                      Text(sub, textAlign: TextAlign.center, style: TextStyle(color: ac.withOpacity(0.8), fontSize: 15, height: 1.5)),
+                      Text(sub, textAlign: TextAlign.center,
+                          style: TextStyle(color: ac.withOpacity(0.8), fontSize: 15, height: 1.5)),
                     ],
                   ),
                 ),
@@ -165,6 +181,12 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 16),
 
+                // GPS Nearest Mandi Card
+                if (widget.userLat != null && widget.userLng != null)
+                  _buildNearestMandiCard(),
+                if (widget.userLat != null && widget.userLng != null)
+                  const SizedBox(height: 16),
+
                 // Why card
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -190,7 +212,8 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                               children: [
                                 Icon(Icons.check_circle_outline, color: ac, size: 16),
                                 const SizedBox(width: 8),
-                                Expanded(child: Text(r, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, height: 1.4))),
+                                Expanded(child: Text(r,
+                                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, height: 1.4))),
                               ],
                             ),
                           )),
@@ -199,7 +222,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 16),
 
-                // Power card
+                // Power card — Best overall
                 if (best != null) ...[
                   Container(
                     width: double.infinity,
@@ -237,7 +260,8 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(best.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                  Text('${best.district}, ${best.state}', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                                  Text('${best.district}, ${best.state}',
+                                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -343,7 +367,8 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                   style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, height: 1.5),
                 ),
                 const SizedBox(height: 16),
-                _buildCalc(best, widget.isHindi),
+                _buildCalc(
+                    decision['bestMandi'] as CropPrice?, widget.isHindi),
               ],
             ),
           ),
@@ -363,72 +388,173 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                   decoration: BoxDecoration(color: const Color(0xFF1A2744), borderRadius: BorderRadius.circular(16)),
                   child: BarChart(BarChartData(
                     backgroundColor: Colors.transparent,
-                    gridData: FlGridData(show: true, getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.05), strokeWidth: 1), drawVerticalLine: false),
+                    gridData: FlGridData(
+                        show: true,
+                        getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.05), strokeWidth: 1),
+                        drawVerticalLine: false),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 45,
-                          getTitlesWidget: (v, m) => Text('₹${_getPrice(v).toStringAsFixed(0)}', style: const TextStyle(color: Colors.white38, fontSize: 8)))),
+                      leftTitles: AxisTitles(sideTitles: SideTitles(
+                          showTitles: true, reservedSize: 45,
+                          getTitlesWidget: (v, m) => Text('₹${_getPrice(v).toStringAsFixed(0)}',
+                              style: const TextStyle(color: Colors.white38, fontSize: 8)))),
                       bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
-                    barGroups: widget.prices.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [
-                      BarChartRodData(
+                    barGroups: widget.prices.asMap().entries.map((e) => BarChartGroupData(
+                      x: e.key,
+                      barRods: [BarChartRodData(
                         toY: _getPrice(e.value.modalPrice),
-                        color: e.value == best ? const Color(0xFF52B788) : const Color(0xFF52B788).withOpacity(0.4),
+                        color: e.value == best
+                            ? const Color(0xFF52B788)
+                            : const Color(0xFF52B788).withOpacity(0.4),
                         width: 18,
                         borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(4)),
-                      ),
-                    ])).toList(),
+                      )],
+                    )).toList(),
                   )),
                 ),
                 const SizedBox(height: 24),
                 Text(widget.isHindi ? 'सभी मंडियां' : 'ALL MANDIS',
                     style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                 const SizedBox(height: 12),
-                ...widget.prices.map((p) => Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A2744),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: p == best ? const Color(0xFF52B788).withOpacity(0.5) : Colors.white.withOpacity(0.05)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(children: [
-                                  Text(p.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                  if (p == best) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(color: const Color(0xFF52B788).withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
-                                      child: Text(widget.isHindi ? '✅ सबसे अच्छा' : '✅ BEST',
-                                          style: const TextStyle(color: Color(0xFF52B788), fontSize: 9, fontWeight: FontWeight.bold)),
-                                    ),
-                                  ],
-                                ]),
-                                Text(p.district, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                ...widget.prices.map((p) {
+                  // Get distance if GPS available
+                  double? dist;
+                  if (widget.userLat != null && widget.userLng != null) {
+                    final mandisWithDist = DecisionEngine.getMandisWithDistance(
+                        widget.prices, widget.userLat!, widget.userLng!);
+                    final match = mandisWithDist.where((m) => (m['price'] as CropPrice) == p).toList();
+                    if (match.isNotEmpty) dist = match.first['distance'] as double?;
+                  }
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A2744),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: p == best
+                              ? const Color(0xFF52B788).withOpacity(0.5)
+                              : Colors.white.withOpacity(0.05)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('₹${_getPrice(p.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)}',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                              Text(_unit(), style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+                              Row(children: [
+                                Text(p.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                if (p == best) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(color: const Color(0xFF52B788).withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                                    child: Text(widget.isHindi ? '✅ सबसे अच्छा' : '✅ BEST',
+                                        style: const TextStyle(color: Color(0xFF52B788), fontSize: 9, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ]),
+                              Text(p.district, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
+                              if (dist != null)
+                                Text('📍 ${dist.toStringAsFixed(0)} km away',
+                                    style: const TextStyle(color: Colors.blueAccent, fontSize: 11)),
                             ],
                           ),
-                        ],
-                      ),
-                    )),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('₹${_getPrice(p.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)}',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(_unit(), style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNearestMandiCard() {
+    final result = DecisionEngine.getBestNearbyMandi(
+        widget.prices, widget.userLat!, widget.userLng!);
+    if (result == null) return const SizedBox();
+
+    final CropPrice price = result['price'] as CropPrice;
+    final double? distance = result['distance'] as double?;
+
+    String distText = distance != null
+        ? '${distance.toStringAsFixed(0)} km ${widget.isHindi ? 'दूर' : 'away'}'
+        : widget.isHindi ? 'दूरी अज्ञात' : 'Distance unknown';
+
+    String travelText = '';
+    if (distance != null) {
+      int hrs = (distance / 60).floor();
+      int mins = ((distance / 60 - hrs) * 60).round();
+      travelText = hrs > 0 ? '~$hrs hr ${mins}min' : '~${mins}min';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2744),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.my_location, color: Colors.blueAccent, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              widget.isHindi ? '📍 आपके पास की सबसे अच्छी मंडी' : '📍 BEST MANDI NEAR YOU',
+              style: const TextStyle(color: Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(price.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text('${price.district}, ${price.state}',
+                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      const Icon(Icons.directions_car, color: Colors.blueAccent, size: 14),
+                      const SizedBox(width: 4),
+                      Text(distText, style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+                      if (travelText.isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        const Icon(Icons.access_time, color: Colors.blueAccent, size: 14),
+                        const SizedBox(width: 4),
+                        Text(travelText, style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+                      ],
+                    ]),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('₹${_getPrice(price.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)}',
+                      style: const TextStyle(color: Colors.blueAccent, fontSize: 22, fontWeight: FontWeight.w900)),
+                  Text(_unit(), style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -538,7 +664,8 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                     border: Border.all(color: pos ? const Color(0xFF52B788).withOpacity(0.4) : Colors.redAccent.withOpacity(0.4)),
                   ),
                   child: Text(result,
-                      style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent, fontSize: 13, height: 1.6, fontWeight: FontWeight.bold)),
+                      style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent,
+                          fontSize: 13, height: 1.6, fontWeight: FontWeight.bold)),
                 );
               },
             ),
