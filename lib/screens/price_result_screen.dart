@@ -27,6 +27,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _showPerKg = false;
+  CropPrice? _selectedMandiForCalc;
 
   @override
   void initState() {
@@ -43,8 +44,17 @@ class _PriceResultScreenState extends State<PriceResultScreen>
   double _getPrice(double q) => _showPerKg ? q / 100 : q;
 
   String _unit() => _showPerKg
-      ? (widget.isHindi ? 'प्रति किलो • आज का भाव' : 'per kg • today')
-      : (widget.isHindi ? 'प्रति क्विंटल • आज का भाव' : 'per quintal • today');
+      ? (widget.isHindi ? 'प्रति किलो' : 'per kg')
+      : (widget.isHindi ? 'प्रति क्विंटल' : 'per quintal');
+
+  double? _getMandiDistance(CropPrice? mandi) {
+    if (mandi == null || widget.userLat == null || widget.userLng == null) return null;
+    final list = DecisionEngine.getMandisWithDistance(
+        widget.prices, widget.userLat!, widget.userLng!);
+    final match = list.where((m) => (m['price'] as CropPrice) == mandi).toList();
+    if (match.isNotEmpty) return match.first['distance'] as double?;
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,18 +68,22 @@ class _PriceResultScreenState extends State<PriceResultScreen>
     final String smartLine = decision['smartLine'] as String;
     final String smartLineHindi = decision['smartLineHindi'] as String;
 
+    if (_selectedMandiForCalc == null && best != null) {
+      _selectedMandiForCalc = best;
+    }
+
     Color ac = advice == 'SELL'
         ? Colors.redAccent
         : advice == 'WAIT'
             ? const Color(0xFF52B788)
             : Colors.orangeAccent;
 
-    String emoji = advice == 'SELL' ? '📉' : advice == 'WAIT' ? '📈' : '➡️';
     String title = advice == 'SELL'
         ? (widget.isHindi ? 'अभी बेचो' : 'SELL NOW')
         : advice == 'WAIT'
             ? (widget.isHindi ? 'रुको' : 'WAIT')
             : (widget.isHindi ? 'नज़र रखो' : 'MONITOR');
+
     String sub = advice == 'SELL'
         ? (widget.isHindi
             ? '${best?.market ?? ''} में सबसे अच्छा दाम\nवहाँ जाकर बेचो'
@@ -135,7 +149,6 @@ class _PriceResultScreenState extends State<PriceResultScreen>
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Decision card
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
@@ -146,9 +159,12 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                   ),
                   child: Column(
                     children: [
-                      Text(emoji, style: const TextStyle(fontSize: 48)),
+                      Text(
+                        advice == 'SELL' ? '📉' : advice == 'WAIT' ? '📈' : '➡️',
+                        style: const TextStyle(fontSize: 48),
+                      ),
                       const SizedBox(height: 10),
-                      Text(title, style: TextStyle(color: ac, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      Text(title, style: TextStyle(color: ac, fontSize: 28, fontWeight: FontWeight.w900)),
                       const SizedBox(height: 8),
                       Text(sub, textAlign: TextAlign.center,
                           style: TextStyle(color: ac.withOpacity(0.8), fontSize: 15, height: 1.5)),
@@ -157,7 +173,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 10),
 
-                // Smart AI line
+                // Smart line
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -173,7 +189,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                       Expanded(
                         child: Text(
                           widget.isHindi ? smartLineHindi : smartLine,
-                          style: TextStyle(color: ac.withOpacity(0.9), fontSize: 12, fontStyle: FontStyle.italic, height: 1.4),
+                          style: TextStyle(color: ac.withOpacity(0.9), fontSize: 12, fontStyle: FontStyle.italic),
                         ),
                       ),
                     ],
@@ -181,11 +197,11 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 16),
 
-                // GPS Nearest Mandi Card
-                if (widget.userLat != null && widget.userLng != null)
+                // GPS Nearest
+                if (widget.userLat != null && widget.userLng != null) ...[
                   _buildNearestMandiCard(),
-                if (widget.userLat != null && widget.userLng != null)
                   const SizedBox(height: 16),
+                ],
 
                 // Why card
                 Container(
@@ -222,7 +238,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 16),
 
-                // Power card — Best overall
+                // Best price card
                 if (best != null) ...[
                   Container(
                     width: double.infinity,
@@ -234,7 +250,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                     child: Center(
                       child: Text(
                         widget.isHindi ? '🔥 सबसे ज़्यादा फायदे वाली मंडी' : '🔥 BEST PROFIT OPTION',
-                        style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -251,7 +267,10 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                           children: [
                             Container(
                               padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(color: const Color(0xFF52B788).withOpacity(0.2), borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF52B788).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: const Icon(Icons.store, color: Color(0xFF52B788), size: 24),
                             ),
                             const SizedBox(width: 12),
@@ -305,7 +324,6 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ],
                 const SizedBox(height: 16),
 
-                // Compare button
                 GestureDetector(
                   onTap: () => _tabController.animateTo(2),
                   child: Container(
@@ -320,7 +338,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(widget.isHindi ? 'सभी मंडियों की तुलना करें' : 'Compare All Mandis',
-                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13)),
                         const SizedBox(width: 6),
                         const Icon(Icons.arrow_forward_ios, color: Color(0xFF52B788), size: 12),
                       ],
@@ -329,7 +347,6 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                 ),
                 const SizedBox(height: 12),
 
-                // Trust badge
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -357,20 +374,232 @@ class _PriceResultScreenState extends State<PriceResultScreen>
           ),
 
           // TAB 2 — PROFIT
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.isHindi ? 'यात्रा से पहले जानें — क्या फायदेमंद है?' : 'Know before you travel — is it worth it?',
-                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, height: 1.5),
+          StatefulBuilder(
+            builder: (context, setTabState) {
+              final autoDist = _getMandiDistance(_selectedMandiForCalc);
+              final distC = TextEditingController();
+              final qtyC = TextEditingController();
+              final resultN = ValueNotifier<String>('');
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.isHindi
+                          ? 'मंडी चुनें — जानें यात्रा फायदेमंद है या नहीं'
+                          : 'Pick a mandi — know if travel is worth it',
+                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, height: 1.5),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Mandi dropdown
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A2744),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<CropPrice>(
+                          value: _selectedMandiForCalc,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xFF1A2744),
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          hint: Text(widget.isHindi ? 'मंडी चुनें' : 'Select a mandi',
+                              style: TextStyle(color: Colors.white.withOpacity(0.4))),
+                          items: widget.prices.map((p) {
+                            final d = _getMandiDistance(p);
+                            return DropdownMenuItem(
+                              value: p,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(p.market, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                                        if (d != null)
+                                          Text('📍 ${d.toStringAsFixed(0)} km',
+                                              style: const TextStyle(color: Colors.blueAccent, fontSize: 11)),
+                                      ],
+                                    ),
+                                  ),
+                                  Text('₹${_getPrice(p.modalPrice).toStringAsFixed(0)}',
+                                      style: const TextStyle(color: Color(0xFF52B788), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setState(() => _selectedMandiForCalc = val);
+                            setTabState(() {});
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Show auto distance info
+                    if (autoDist != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.gps_fixed, color: Colors.blueAccent, size: 14),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.isHindi
+                                  ? 'GPS से दूरी: ${autoDist.toStringAsFixed(0)} किमी — नीचे अपनी मात्रा डालें'
+                                  : 'GPS distance: ${autoDist.toStringAsFixed(0)} km — enter quantity below',
+                              style: const TextStyle(color: Colors.blueAccent, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+
+                    // Calculator
+                    if (_selectedMandiForCalc != null)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A2744),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              const Text('🚛 ', style: TextStyle(fontSize: 18)),
+                              Text(
+                                widget.isHindi ? 'परिवहन लाभ कैलकुलेटर' : 'TRANSPORT PROFIT CALCULATOR',
+                                style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                              ),
+                            ]),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${_selectedMandiForCalc!.market} — ₹${_getPrice(_selectedMandiForCalc!.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)} ${_unit()}',
+                              style: const TextStyle(color: Color(0xFF52B788), fontSize: 12),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Distance field — auto-filled if GPS available
+                            TextField(
+                              controller: distC..text = autoDist != null ? autoDist.toStringAsFixed(0) : '',
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: widget.isHindi ? 'मंडी की दूरी (किमी)' : 'Distance to mandi (km)',
+                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                                filled: true,
+                                fillColor: const Color(0xFF0A1628),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                prefixIcon: const Icon(Icons.route, color: Color(0xFF52B788), size: 18),
+                                suffixIcon: autoDist != null
+                                    ? const Padding(
+                                        padding: EdgeInsets.only(right: 8),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.gps_fixed, color: Color(0xFF52B788), size: 14),
+                                            SizedBox(width: 2),
+                                            Text('GPS', style: TextStyle(color: Color(0xFF52B788), fontSize: 10)),
+                                          ],
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Quantity field
+                            TextField(
+                              controller: qtyC,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: widget.isHindi ? 'बेचने की मात्रा (क्विंटल)' : 'Quantity to sell (quintals)',
+                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                                filled: true,
+                                fillColor: const Color(0xFF0A1628),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                prefixIcon: const Icon(Icons.scale, color: Color(0xFF52B788), size: 18),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            GestureDetector(
+                              onTap: () {
+                                double dist = double.tryParse(distC.text) ?? autoDist ?? 0;
+                                double qty = double.tryParse(qtyC.text) ?? 0;
+                                if (dist == 0 || qty == 0) {
+                                  resultN.value = widget.isHindi
+                                      ? 'कृपया दूरी और मात्रा दर्ज करें'
+                                      : 'Please enter distance and quantity';
+                                  return;
+                                }
+                                final r = DecisionEngine.calculateProfit(
+                                    price: _selectedMandiForCalc!.modalPrice, quantity: qty, distance: dist);
+                                bool wi = r['worthIt'] as bool;
+                                double np = r['netProfit'] as double;
+                                double tc = r['transportCost'] as double;
+                                double ppq = r['profitPerQuintal'] as double;
+                                resultN.value = wi
+                                    ? (widget.isHindi
+                                        ? '✅ यात्रा करना फायदेमंद है!\n\nकुल लाभ: ₹${np.toStringAsFixed(0)}\nप्रति क्विंटल: ₹${ppq.toStringAsFixed(0)}\nयात्रा खर्च: ₹${tc.toStringAsFixed(0)}'
+                                        : '✅ Worth the travel!\n\nTotal profit: ₹${np.toStringAsFixed(0)}\nPer quintal: ₹${ppq.toStringAsFixed(0)}\nTravel cost: ₹${tc.toStringAsFixed(0)}')
+                                    : (widget.isHindi
+                                        ? '❌ यात्रा फायदेमंद नहीं\n\nयात्रा खर्च: ₹${tc.toStringAsFixed(0)}\nनजदीकी मंडी में बेचना बेहतर है'
+                                        : '❌ Not worth the travel\n\nTravel cost: ₹${tc.toStringAsFixed(0)}\nSell at local mandi instead');
+                              },
+                              child: Container(
+                                width: double.infinity, height: 44,
+                                decoration: BoxDecoration(color: const Color(0xFF52B788), borderRadius: BorderRadius.circular(10)),
+                                child: Center(child: Text(
+                                  widget.isHindi ? 'लाभ की गणना करें' : 'CALCULATE NET PROFIT',
+                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13),
+                                )),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            ValueListenableBuilder<String>(
+                              valueListenable: resultN,
+                              builder: (context, result, _) {
+                                if (result.isEmpty) return const SizedBox();
+                                bool pos = result.contains('✅');
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: pos ? const Color(0xFF52B788).withOpacity(0.15) : Colors.redAccent.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: pos ? const Color(0xFF52B788).withOpacity(0.4) : Colors.redAccent.withOpacity(0.4)),
+                                  ),
+                                  child: Text(result,
+                                      style: TextStyle(
+                                          color: pos ? const Color(0xFF52B788) : Colors.redAccent,
+                                          fontSize: 13, height: 1.6, fontWeight: FontWeight.bold)),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                _buildCalc(
-                    decision['bestMandi'] as CropPrice?, widget.isHindi),
-              ],
-            ),
+              );
+            },
           ),
 
           // TAB 3 — MARKETS
@@ -406,9 +635,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                       x: e.key,
                       barRods: [BarChartRodData(
                         toY: _getPrice(e.value.modalPrice),
-                        color: e.value == best
-                            ? const Color(0xFF52B788)
-                            : const Color(0xFF52B788).withOpacity(0.4),
+                        color: e.value == best ? const Color(0xFF52B788) : const Color(0xFF52B788).withOpacity(0.4),
                         width: 18,
                         borderRadius: const BorderRadius.only(topLeft: Radius.circular(4), topRight: Radius.circular(4)),
                       )],
@@ -420,14 +647,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                     style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
                 const SizedBox(height: 12),
                 ...widget.prices.map((p) {
-                  // Get distance if GPS available
-                  double? dist;
-                  if (widget.userLat != null && widget.userLng != null) {
-                    final mandisWithDist = DecisionEngine.getMandisWithDistance(
-                        widget.prices, widget.userLat!, widget.userLng!);
-                    final match = mandisWithDist.where((m) => (m['price'] as CropPrice) == p).toList();
-                    if (match.isNotEmpty) dist = match.first['distance'] as double?;
-                  }
+                  final dist = _getMandiDistance(p);
                   return Container(
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
@@ -435,9 +655,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                       color: const Color(0xFF1A2744),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: p == best
-                              ? const Color(0xFF52B788).withOpacity(0.5)
-                              : Colors.white.withOpacity(0.05)),
+                          color: p == best ? const Color(0xFF52B788).withOpacity(0.5) : Colors.white.withOpacity(0.05)),
                     ),
                     child: Row(
                       children: [
@@ -446,16 +664,19 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(children: [
-                                Text(p.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                if (p == best) ...[
-                                  const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(p.market,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                ),
+                                if (p == best)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(color: const Color(0xFF52B788).withOpacity(0.2), borderRadius: BorderRadius.circular(4)),
+                                    decoration: BoxDecoration(
+                                        color: const Color(0xFF52B788).withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4)),
                                     child: Text(widget.isHindi ? '✅ सबसे अच्छा' : '✅ BEST',
                                         style: const TextStyle(color: Color(0xFF52B788), fontSize: 9, fontWeight: FontWeight.bold)),
                                   ),
-                                ],
                               ]),
                               Text(p.district, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12)),
                               if (dist != null)
@@ -485,79 +706,107 @@ class _PriceResultScreenState extends State<PriceResultScreen>
   }
 
   Widget _buildNearestMandiCard() {
-    final result = DecisionEngine.getBestNearbyMandi(
-        widget.prices, widget.userLat!, widget.userLng!);
-    if (result == null) return const SizedBox();
+    final nearest = DecisionEngine.getNearestMandi(widget.prices, widget.userLat!, widget.userLng!);
+    final bestNearby = DecisionEngine.getBestNearbyMandi(widget.prices, widget.userLat!, widget.userLng!);
+    if (nearest == null) return const SizedBox();
 
-    final CropPrice price = result['price'] as CropPrice;
-    final double? distance = result['distance'] as double?;
+    final CropPrice nearestPrice = nearest['price'] as CropPrice;
+    final double? nearestDist = nearest['distance'] as double?;
+    final CropPrice? bestPrice = bestNearby?['price'] as CropPrice?;
+    final double? bestDist = bestNearby?['distance'] as double?;
 
-    String distText = distance != null
-        ? '${distance.toStringAsFixed(0)} km ${widget.isHindi ? 'दूर' : 'away'}'
+    String distText(double? d) => d != null
+        ? '${d.toStringAsFixed(0)} km ${widget.isHindi ? "दूर" : "away"}'
         : widget.isHindi ? 'दूरी अज्ञात' : 'Distance unknown';
 
-    String travelText = '';
-    if (distance != null) {
-      int hrs = (distance / 60).floor();
-      int mins = ((distance / 60 - hrs) * 60).round();
-      travelText = hrs > 0 ? '~$hrs hr ${mins}min' : '~${mins}min';
+    String travelText(double? d) {
+      if (d == null) return '';
+      int hrs = (d / 60).floor();
+      int mins = ((d / 60 - hrs) * 60).round();
+      return hrs > 0 ? '~$hrs hr ${mins}min' : '~${mins}min';
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2744),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            const Icon(Icons.my_location, color: Colors.blueAccent, size: 16),
-            const SizedBox(width: 8),
-            Text(
-              widget.isHindi ? '📍 आपके पास की सबसे अच्छी मंडी' : '📍 BEST MANDI NEAR YOU',
-              style: const TextStyle(color: Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
-            ),
-          ]),
-          const SizedBox(height: 12),
-          Row(
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2744),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(price.market, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('${price.district}, ${price.state}',
-                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      const Icon(Icons.directions_car, color: Colors.blueAccent, size: 14),
-                      const SizedBox(width: 4),
-                      Text(distText, style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
-                      if (travelText.isNotEmpty) ...[
-                        const SizedBox(width: 10),
-                        const Icon(Icons.access_time, color: Colors.blueAccent, size: 14),
+              Row(children: [
+                const Icon(Icons.near_me, color: Colors.blueAccent, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  widget.isHindi ? '📍 सबसे नज़दीकी मंडी' : '📍 NEAREST MANDI',
+                  style: const TextStyle(color: Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              Row(children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(nearestPrice.market,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('${nearestPrice.district}, ${nearestPrice.state}',
+                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                      const SizedBox(height: 6),
+                      Row(children: [
+                        const Icon(Icons.directions_car, color: Colors.blueAccent, size: 14),
                         const SizedBox(width: 4),
-                        Text(travelText, style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
-                      ],
-                    ]),
+                        Text(distText(nearestDist), style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+                        if (travelText(nearestDist).isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          const Icon(Icons.access_time, color: Colors.blueAccent, size: 14),
+                          const SizedBox(width: 4),
+                          Text(travelText(nearestDist), style: const TextStyle(color: Colors.blueAccent, fontSize: 12)),
+                        ],
+                      ]),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('₹${_getPrice(nearestPrice.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)}',
+                        style: const TextStyle(color: Colors.blueAccent, fontSize: 22, fontWeight: FontWeight.w900)),
+                    Text(_unit(), style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('₹${_getPrice(price.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)}',
-                      style: const TextStyle(color: Colors.blueAccent, fontSize: 22, fontWeight: FontWeight.w900)),
-                  Text(_unit(), style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
-                ],
-              ),
+              ]),
             ],
           ),
+        ),
+        if (bestPrice != null && bestPrice.market != nearestPrice.market) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A2744),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.trending_up, color: Colors.orangeAccent, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.isHindi
+                      ? '💡 ${bestPrice.market} में ज़्यादा दाम (${distText(bestDist)}) — लाभ टैब में देखें'
+                      : '💡 ${bestPrice.market} has higher price (${distText(bestDist)}) — check Profit tab',
+                  style: TextStyle(color: Colors.orangeAccent.withOpacity(0.9), fontSize: 11, height: 1.4),
+                ),
+              ),
+            ]),
+          ),
         ],
-      ),
+      ],
     );
   }
 
@@ -568,110 +817,5 @@ class _PriceResultScreenState extends State<PriceResultScreen>
       Text(val, style: const TextStyle(color: Color(0xFF52B788), fontSize: 12, fontWeight: FontWeight.bold)),
       Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
     ]);
-  }
-
-  Widget _buildCalc(CropPrice? best, bool isHindi) {
-    if (best == null) return const SizedBox();
-    final distC = TextEditingController();
-    final qtyC = TextEditingController();
-    final resultN = ValueNotifier<String>('');
-
-    return StatefulBuilder(builder: (context, ss) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2744),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              const Text('🚛 ', style: TextStyle(fontSize: 18)),
-              Text(isHindi ? 'परिवहन लाभ कैलकुलेटर' : 'TRANSPORT PROFIT CALCULATOR',
-                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-            ]),
-            const SizedBox(height: 8),
-            Text('${best.market} — ₹${_getPrice(best.modalPrice).toStringAsFixed(_showPerKg ? 1 : 0)} ${_unit()}',
-                style: const TextStyle(color: Color(0xFF52B788), fontSize: 12)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: distC,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: isHindi ? 'मंडी की दूरी (किमी)' : 'Distance to mandi (km)',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
-                filled: true, fillColor: const Color(0xFF0A1628),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                prefixIcon: const Icon(Icons.route, color: Color(0xFF52B788), size: 18),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: qtyC,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: isHindi ? 'बेचने की मात्रा (क्विंटल)' : 'Quantity to sell (quintals)',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
-                filled: true, fillColor: const Color(0xFF0A1628),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                prefixIcon: const Icon(Icons.scale, color: Color(0xFF52B788), size: 18),
-              ),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () {
-                double dist = double.tryParse(distC.text) ?? 0;
-                double qty = double.tryParse(qtyC.text) ?? 0;
-                if (dist == 0 || qty == 0) {
-                  resultN.value = isHindi ? 'कृपया दूरी और मात्रा दर्ज करें' : 'Please enter distance and quantity';
-                  return;
-                }
-                final r = DecisionEngine.calculateProfit(price: best.modalPrice, quantity: qty, distance: dist);
-                bool wi = r['worthIt'] as bool;
-                double np = r['netProfit'] as double;
-                double tc = r['transportCost'] as double;
-                double ppq = r['profitPerQuintal'] as double;
-                resultN.value = wi
-                    ? (isHindi
-                        ? '✅ यात्रा करना फायदेमंद है!\n\nकुल लाभ: ₹${np.toStringAsFixed(0)}\nप्रति क्विंटल: ₹${ppq.toStringAsFixed(0)}\nयात्रा खर्च: ₹${tc.toStringAsFixed(0)}'
-                        : '✅ Worth the travel!\n\nTotal profit: ₹${np.toStringAsFixed(0)}\nPer quintal: ₹${ppq.toStringAsFixed(0)}\nTravel cost: ₹${tc.toStringAsFixed(0)}')
-                    : (isHindi
-                        ? '❌ यात्रा फायदेमंद नहीं\n\nयात्रा खर्च: ₹${tc.toStringAsFixed(0)}\nनजदीकी मंडी में बेचना बेहतर है'
-                        : '❌ Not worth the travel\n\nTravel cost: ₹${tc.toStringAsFixed(0)}\nSell at local mandi instead');
-              },
-              child: Container(
-                width: double.infinity, height: 44,
-                decoration: BoxDecoration(color: const Color(0xFF52B788), borderRadius: BorderRadius.circular(10)),
-                child: Center(child: Text(isHindi ? 'लाभ की गणना करें' : 'CALCULATE NET PROFIT',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 13))),
-              ),
-            ),
-            const SizedBox(height: 12),
-            ValueListenableBuilder<String>(
-              valueListenable: resultN,
-              builder: (context, result, _) {
-                if (result.isEmpty) return const SizedBox();
-                bool pos = result.contains('✅');
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: pos ? const Color(0xFF52B788).withOpacity(0.15) : Colors.redAccent.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: pos ? const Color(0xFF52B788).withOpacity(0.4) : Colors.redAccent.withOpacity(0.4)),
-                  ),
-                  child: Text(result,
-                      style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent,
-                          fontSize: 13, height: 1.6, fontWeight: FontWeight.bold)),
-                );
-              },
-            ),
-          ],
-        ),
-      );
-    });
   }
 }
