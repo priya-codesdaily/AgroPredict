@@ -1,4 +1,3 @@
-Set-Content -Path "C:\Users\hp\Desktop\agropredict\README.md" -Encoding UTF8 -Value @'
 # AgroPredict 🌾
 
 AgroPredict is a Flutter-based agricultural decision-support app built after talking directly with farmers in rural Odisha and Jharkhand.
