@@ -39,6 +39,7 @@ dependencies:
   fl_chart: 0.68.0
   speech_to_text: ^7.3.0
   geolocator: ^14.0.2
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:

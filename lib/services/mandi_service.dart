@@ -10,7 +10,7 @@ class MandiService {
   static Future<List<CropPrice>> fetchPrices({
     required String cropName,
     String? state,
-    int limit = 20,
+    int limit = 50,
   }) async {
     try {
       String url =

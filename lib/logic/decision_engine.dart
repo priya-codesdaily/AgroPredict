@@ -19,6 +19,7 @@ class DecisionEngine {
     double avgPrice = prices.map((p) => p.modalPrice).reduce((a, b) => a + b) / prices.length;
     CropPrice bestMandi = prices.reduce((a, b) => a.modalPrice > b.modalPrice ? a : b);
     double percentAboveAvg = ((bestMandi.modalPrice - avgPrice) / avgPrice) * 100;
+
     String advice;
     if (percentAboveAvg > 20) {
       advice = 'SELL';
@@ -31,19 +32,21 @@ class DecisionEngine {
     } else {
       advice = 'NEUTRAL';
     }
+
     List<String> reasons = [];
     if (advice == 'SELL') {
       reasons.add('Price is ${percentAboveAvg.toStringAsFixed(0)}% higher than nearby markets');
       reasons.add('Best rate found in ${bestMandi.market}');
       reasons.add('Good time to sell — prices are stable');
     } else if (advice == 'WAIT') {
-      reasons.add('Average price is currently low');
-      reasons.add('Prices may improve in 5-7 days');
-      reasons.add('Better opportunities expected soon');
+      reasons.add('Average price is currently below normal');
+      reasons.add('Monitor daily — prices could improve');
+      reasons.add('Sell only if storage cost is high');
     } else {
       reasons.add('Prices are similar across all mandis');
-      reasons.add('Monitor for 2-3 more days');
+      reasons.add('Monitor for 2-3 more days before deciding');
     }
+
     String smartLine;
     String smartLineHindi;
     if (advice == 'SELL') {
@@ -58,12 +61,13 @@ class DecisionEngine {
         smartLineHindi = 'दाम स्थिर है — अभी बेचो';
       }
     } else if (advice == 'WAIT') {
-      smartLine = 'Prices rising — waiting 3-5 days may get better rates';
-      smartLineHindi = 'दाम बढ़ रहे हैं — 3-5 दिन रुकें';
+      smartLine = 'Prices are below average this week. Monitor before selling.';
+      smartLineHindi = 'इस हफ्ते दाम औसत से कम हैं। बेचने से पहले देखते रहें।';
     } else {
       smartLine = 'Monitor daily — prices could move either way';
       smartLineHindi = 'रोज़ देखते रहें';
     }
+
     return {
       'advice': advice,
       'bestMandi': bestMandi,
@@ -104,15 +108,10 @@ class DecisionEngine {
       double? distance;
       if (coords != null) {
         distance = Geolocator.distanceBetween(
-          userLat, userLng,
-          coords['lat']!, coords['lng']!,
+          userLat, userLng, coords['lat']!, coords['lng']!,
         ) / 1000;
       }
-      result.add({
-        'price': price,
-        'distance': distance,
-        'hasLocation': coords != null,
-      });
+      result.add({'price': price, 'distance': distance, 'hasLocation': coords != null});
     }
     result.sort((a, b) {
       if (a['distance'] == null && b['distance'] == null) return 0;
@@ -123,18 +122,15 @@ class DecisionEngine {
     return result;
   }
 
-  // NEAREST mandi by distance
   static Map<String, dynamic>? getNearestMandi(
       List<CropPrice> prices, double userLat, double userLng) {
     final mandisWithDist = getMandisWithDistance(prices, userLat, userLng);
     final known = mandisWithDist.where((m) => m['distance'] != null).toList();
     if (known.isEmpty) return null;
-    known.sort((a, b) =>
-        (a['distance'] as double).compareTo(b['distance'] as double));
+    known.sort((a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
     return known.first;
   }
 
-  // BEST PRICE mandi within range
   static Map<String, dynamic>? getBestNearbyMandi(
       List<CropPrice> prices, double userLat, double userLng,
       {double maxKm = 500}) {
