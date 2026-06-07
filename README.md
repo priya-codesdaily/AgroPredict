@@ -83,7 +83,7 @@ I visited farms in Odisha and Jharkhand, sat with farmers, asked them to use the
 - *"Padhne me dikkat hota hai"* → Voice output added on advice screen — app reads result aloud
 - *"Profit nahi hota, mehnat ka faal nahi milta"* → Transport profit calculator built
 - *"Kitna kg mein?"* → ₹/quintal ↔ ₹/kg toggle added
-Tested with 13 farmers across Odisha and Jharkhand. A government block office worker in our district reached out independently to test it. Agricultural department staff gave feedback that shaped the V2 roadmap. My mother used the app without any guidance.
+Tested with farmers across Odisha and Jharkhand through multiple field visits. A government block office worker in our district reached out independently to test it gave feedback that shaped the V2 roadmap. My mother used the app without any guidance.
  
 > This project keeps improving from real farmer feedback — not assumptions.
  
