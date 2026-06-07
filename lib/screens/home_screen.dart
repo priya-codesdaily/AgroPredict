@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/mandi_service.dart';
 import '../models/crop_model.dart';
 import '../models/crop_varieties.dart';
@@ -7,7 +8,6 @@ import 'price_result_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -22,6 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedVariety = '';
   bool _showVarieties = false;
   List<String> _currentVarieties = [];
+  double? _userLat;
+  double? _userLng;
+  String _locationName = '';
+  bool _locationLoading = true;
 
   final List<String> _popularCrops = [
     'Mango', 'Rice', 'Wheat', 'Tomato',
@@ -33,6 +37,58 @@ class _HomeScreenState extends State<HomeScreen> {
     'Tomato': 'टमाटर', 'Potato': 'आलू', 'Onion': 'प्याज',
     'Cotton': 'कपास', 'Soybean': 'सोयाबीन',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserLocation();
+  }
+
+  Future<void> _getUserLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _locationLoading = false);
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _locationLoading = false);
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+        timeLimit: const Duration(seconds: 15),
+      );
+      setState(() {
+        _userLat = position.latitude;
+        _userLng = position.longitude;
+        _locationLoading = false;
+        _locationName = _getLocationName(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      setState(() => _locationLoading = false);
+    }
+  }
+
+  String _getLocationName(double lat, double lng) {
+    if (lat >= 22.0 && lat <= 25.5 && lng >= 83.5 && lng <= 87.5) return 'Jharkhand';
+    if (lat >= 19.0 && lat <= 22.5 && lng >= 81.5 && lng <= 87.5) return 'Odisha';
+    if (lat >= 28.0 && lat <= 32.0 && lng >= 74.0 && lng <= 78.0) return 'Punjab/Haryana';
+    if (lat >= 18.0 && lat <= 21.0 && lng >= 73.0 && lng <= 80.5) return 'Maharashtra';
+    if (lat >= 8.0 && lat <= 13.5 && lng >= 76.0 && lng <= 80.5) return 'Tamil Nadu';
+    if (lat >= 12.0 && lat <= 18.5 && lng >= 74.0 && lng <= 78.5) return 'Karnataka';
+    if (lat >= 17.0 && lat <= 19.5 && lng >= 77.0 && lng <= 81.5) return 'Telangana';
+    if (lat >= 24.0 && lat <= 30.0 && lng >= 72.0 && lng <= 78.0) return 'Rajasthan';
+    if (lat >= 20.0 && lat <= 26.5 && lng >= 72.5 && lng <= 75.5) return 'Gujarat';
+    if (lat >= 22.0 && lat <= 27.0 && lng >= 88.0 && lng <= 92.0) return 'West Bengal';
+    if (lat >= 25.0 && lat <= 27.5 && lng >= 83.0 && lng <= 88.0) return 'Bihar';
+    if (lat >= 20.0 && lat <= 24.0 && lng >= 80.0 && lng <= 82.5) return 'Chhattisgarh';
+    return 'India';
+  }
 
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
@@ -58,9 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isHindi
-                ? 'माइक्रोफोन उपलब्ध नहीं है'
-                : 'Microphone not available'),
+            content: Text(_isHindi ? 'माइक्रोफोन उपलब्ध नहीं' : 'Microphone not available'),
             backgroundColor: Colors.red,
           ),
         );
@@ -74,10 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _updateVarieties(String cropName) {
-    final trimmed = cropName.trim();
     setState(() {
-      _showVarieties = CropVarieties.hasVarieties(trimmed);
-      _currentVarieties = CropVarieties.getVarieties(trimmed);
+      _showVarieties = CropVarieties.hasVarieties(cropName.trim());
+      _currentVarieties = CropVarieties.getVarieties(cropName.trim());
       _selectedVariety = '';
     });
   }
@@ -86,41 +139,59 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_cropController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isHindi
-              ? 'कृपया फसल का नाम दर्ज करें'
-              : 'Please enter a crop name'),
-          backgroundColor: Colors.red,
+          content: Text(_isHindi ? 'कृपया फसल का नाम दर्ज करें' : 'Please enter a crop name'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
       return;
     }
     setState(() => _isLoading = true);
-    List<CropPrice> prices = [];
+
     String baseCrop = _cropController.text.trim();
-String searchCrop = _selectedVariety.isNotEmpty && 
-    !_selectedVariety.startsWith('All')
-    ? '$baseCrop $_selectedVariety'
-    : baseCrop;
+    String searchCrop = _selectedVariety.isNotEmpty && !_selectedVariety.startsWith('All')
+        ? '$baseCrop $_selectedVariety'
+        : baseCrop;
+    String displayName = _selectedVariety.isNotEmpty && !_selectedVariety.startsWith('All')
+        ? '$baseCrop · $_selectedVariety'
+        : baseCrop;
+
+    List<CropPrice> prices = [];
+    String? errorMsg;
     try {
       prices = await MandiService.fetchPrices(
         cropName: searchCrop,
         state: _stateController.text.trim(),
       );
     } catch (e) {
+      errorMsg = e.toString();
       prices = MandiService.getMockData(searchCrop);
     }
-    if (prices.isEmpty) {
-      prices = MandiService.getMockData(searchCrop);
-    }
+    if (prices.isEmpty) prices = MandiService.getMockData(searchCrop);
+
     setState(() => _isLoading = false);
+
     if (mounted) {
+      if (errorMsg != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isHindi ? 'लाइव डेटा नहीं मिला। सैंपल डेटा दिखा रहे हैं।' : 'Live data unavailable. Showing sample data.'),
+            backgroundColor: Colors.orangeAccent.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
       await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PriceResultScreen(
-            cropName: searchCrop,
+            cropName: displayName,
             prices: prices,
             isHindi: _isHindi,
+            userLat: _userLat,
+            userLng: _userLng,
           ),
         ),
       );
@@ -137,7 +208,7 @@ String searchCrop = _selectedVariety.isNotEmpty &&
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Header
               Row(
@@ -151,60 +222,29 @@ String searchCrop = _selectedVariety.isNotEmpty &&
                     child: const Text('🌾', style: TextStyle(fontSize: 28)),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('AgroPredict',
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white)),
-                      Text(
-                        _isHindi
-                            ? 'स्मार्ट फसल मूल्य सहायक'
-                            : 'Smart Crop Price Intelligence',
-                        style: const TextStyle(
-                            fontSize: 12, color: Color(0xFF52B788)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Status + Language Toggle
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(20)),
-                    child: Text(
-                      _isHindi ? '● लाइव मंडी भाव' : '● LIVE MANDI PRICES',
-                      style: const TextStyle(
-                          color: Color(0xFF52B788),
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('AgroPredict',
+                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                        Text(
+                          _isHindi ? 'स्मार्ट फसल मूल्य सहायक' : 'Smart Crop Price Intelligence',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF52B788)),
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
                   GestureDetector(
                     onTap: () => setState(() => _isHindi = false),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: !_isHindi
-                            ? const Color(0xFF52B788)
-                            : Colors.white10,
+                        color: !_isHindi ? const Color(0xFF52B788) : Colors.white10,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('EN',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
                               color: !_isHindi ? Colors.black : Colors.white)),
                     ),
                   ),
@@ -212,203 +252,215 @@ String searchCrop = _selectedVariety.isNotEmpty &&
                   GestureDetector(
                     onTap: () => setState(() => _isHindi = true),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _isHindi
-                            ? const Color(0xFF52B788)
-                            : Colors.white10,
+                        color: _isHindi ? const Color(0xFF52B788) : Colors.white10,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('हिंदी',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
                               color: _isHindi ? Colors.black : Colors.white)),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 10),
+
+              // Status badges row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _isHindi ? '● लाइव मंडी भाव' : '● LIVE MANDI PRICES',
+                      style: const TextStyle(color: Color(0xFF52B788), fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _userLat != null
+                          ? const Color(0xFF52B788).withOpacity(0.15)
+                          : Colors.white10,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _userLat != null
+                            ? const Color(0xFF52B788).withOpacity(0.5)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _locationLoading
+                              ? Icons.location_searching
+                              : _userLat != null
+                                  ? Icons.location_on
+                                  : Icons.location_off,
+                          color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _locationLoading
+                              ? (_isHindi ? 'खोज रहे...' : 'Searching...')
+                              : _userLat != null
+                                  ? '📍 ${_locationName.isNotEmpty ? _locationName : "GPS Active"}'
+                                  : (_isHindi ? 'GPS बंद' : 'GPS off'),
+                          style: TextStyle(
+                            color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
 
               // Info card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1B4332).withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: const Color(0xFF52B788).withOpacity(0.3)),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF52B788).withOpacity(0.25)),
                 ),
                 child: Row(
                   children: [
-                    const Text('💡', style: TextStyle(fontSize: 20)),
+                    const Text('💡', style: TextStyle(fontSize: 18)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         _isHindi
-                            ? 'फसल का नाम डालें या बोलें — किस्म भी चुन सकते हैं'
-                            : 'Type or speak crop name — select variety for better results',
-                        style: const TextStyle(
-                            color: Color(0xFF95D5B2),
-                            fontSize: 13,
-                            height: 1.4),
+                            ? 'फसल का नाम डालें या बोलें — किस्म चुनें — GPS से नज़दीकी मंडी देखें'
+                            : 'Enter crop name — select variety — GPS finds nearest mandi',
+                        style: const TextStyle(color: Color(0xFF95D5B2), fontSize: 13, height: 1.4),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Crop Name
               Text(_isHindi ? 'फसल का नाम' : 'CROP NAME',
-                  style: const TextStyle(
-                      color: Color(0xFF52B788),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5)),
+                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                      fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 8),
               TextField(
                 controller: _cropController,
                 onChanged: _updateVarieties,
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: _isHindi
-                      ? 'जैसे: आम, चावल, गेहूं'
-                      : 'e.g. Mango, Rice, Wheat',
-                  hintStyle:
-                      TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintText: _isHindi ? 'जैसे: आम, चावल, गेहूं' : 'e.g. Mango, Rice, Wheat',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                   filled: true,
                   fillColor: const Color(0xFF1A2744),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF52B788), width: 1.5)),
-                  prefixIcon:
-                      const Icon(Icons.grass, color: Color(0xFF52B788)),
+                      borderSide: const BorderSide(color: Color(0xFF52B788), width: 1.5)),
+                  prefixIcon: const Icon(Icons.grass, color: Color(0xFF52B788)),
                   suffixIcon: GestureDetector(
                     onTap: _isListening ? _stopListening : _startListening,
-                    child: Icon(
-                      _isListening ? Icons.mic : Icons.mic_none,
-                      color: _isListening
-                          ? Colors.redAccent
-                          : const Color(0xFF52B788),
+                    child: Container(
+                      margin: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: _isListening
+                            ? Colors.redAccent.withOpacity(0.2)
+                            : const Color(0xFF52B788).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening ? Colors.redAccent : const Color(0xFF52B788),
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.only(top: 5, left: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.mic_none, color: Color(0xFF52B788), size: 11),
+                    const SizedBox(width: 4),
+                    Text(
+                      _isHindi ? 'माइक दबाएं और फसल का नाम बोलें' : 'Tap mic to speak crop name',
+                      style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
 
-              // Listening indicator
               if (_isListening)
                 Container(
                   margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.15),
+                    color: Colors.redAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Colors.redAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.mic,
-                          color: Colors.redAccent, size: 16),
+                      const Icon(Icons.mic, color: Colors.redAccent, size: 16),
                       const SizedBox(width: 8),
                       Text(
-                        _isHindi
-                            ? 'सुन रहा हूँ... बोलिए'
-                            : 'Listening... speak now',
-                        style: const TextStyle(
-                            color: Colors.redAccent, fontSize: 12),
+                        _isHindi ? 'सुन रहा हूँ... बोलिए 🎤' : 'Listening... speak now 🎤',
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                       ),
                     ],
                   ),
                 ),
-// Add after the crop TextField closing bracket
-if (!_isListening)
-  Padding(
-    padding: const EdgeInsets.only(top: 6, left: 4),
-    child: Row(
-      children: [
-        const Icon(Icons.mic_none, color: Color(0xFF52B788), size: 12),
-        const SizedBox(width: 4),
-        Text(
-          _isHindi
-              ? 'माइक दबाएं और फसल का नाम बोलें'
-              : 'Tap mic to speak crop name',
-          style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 11),
-        ),
-      ],
-    ),
-  ),
-              // Variety Selector
+
               if (_showVarieties && _currentVarieties.isNotEmpty)
                 Container(
                   margin: const EdgeInsets.only(top: 10),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A2744),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: const Color(0xFF52B788).withOpacity(0.3)),
+                    border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.category,
-                              color: Color(0xFF52B788), size: 14),
-                          const SizedBox(width: 6),
-                          Text(
-                            _isHindi
-                                ? 'किस्म चुनें (वैकल्पिक)'
-                                : 'Select variety (optional)',
-                            style: TextStyle(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 11),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
+                      Row(children: [
+                        const Icon(Icons.category, color: Color(0xFF52B788), size: 14),
+                        const SizedBox(width: 6),
+                        Text(_isHindi ? 'किस्म चुनें (वैकल्पिक)' : 'Select variety (optional)',
+                            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                      ]),
+                      const SizedBox(height: 10),
                       Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                        spacing: 8, runSpacing: 8,
                         children: _currentVarieties.map((v) {
                           bool selected = _selectedVariety == v;
                           return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedVariety = selected ? '' : v;
-                              });
-                            },
+                            onTap: () => setState(() => _selectedVariety = selected ? '' : v),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: selected
-                                    ? const Color(0xFF52B788)
-                                    : Colors.white10,
+                                color: selected ? const Color(0xFF52B788) : Colors.white10,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: selected
-                                      ? const Color(0xFF52B788)
-                                      : Colors.white24,
-                                ),
+                                border: Border.all(color: selected ? const Color(0xFF52B788) : Colors.white24),
                               ),
                               child: Text(v,
                                   style: TextStyle(
-                                      color: selected
-                                          ? Colors.black
-                                          : Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: selected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal)),
+                                      color: selected ? Colors.black : Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
                             ),
                           );
                         }).toList(),
@@ -418,77 +470,67 @@ if (!_isListening)
                 ),
 
               const SizedBox(height: 16),
-
-              // State
               Text(_isHindi ? 'राज्य (वैकल्पिक)' : 'STATE (OPTIONAL)',
-                  style: const TextStyle(
-                      color: Color(0xFF52B788),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5)),
+                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                      fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 8),
               TextField(
                 controller: _stateController,
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: _isHindi
-                      ? 'जैसे: ओडिशा, महाराष्ट्र'
-                      : 'e.g. Odisha, Maharashtra',
-                  hintStyle:
-                      TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintText: _isHindi ? 'जैसे: ओडिशा, महाराष्ट्र' : 'e.g. Odisha, Maharashtra',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                   filled: true,
                   fillColor: const Color(0xFF1A2744),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                          color: Color(0xFF52B788), width: 1.5)),
-                  prefixIcon: const Icon(Icons.location_on,
-                      color: Color(0xFF52B788)),
+                      borderSide: const BorderSide(color: Color(0xFF52B788), width: 1.5)),
+                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFF52B788)),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // Search Button
               GestureDetector(
                 onTap: _isLoading ? null : _search,
                 child: Container(
                   width: double.infinity,
-                  height: 56,
+                  height: 58,
                   decoration: BoxDecoration(
-                      color: const Color(0xFF52B788),
-                      borderRadius: BorderRadius.circular(16)),
+                    color: _isLoading
+                        ? const Color(0xFF52B788).withOpacity(0.6)
+                        : const Color(0xFF52B788),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Center(
                     child: _isLoading
-                        ? const CircularProgressIndicator(
-                            color: Colors.black)
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(width: 20, height: 20,
+                                  child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)),
+                              const SizedBox(width: 12),
+                              Text(_isHindi ? 'डेटा लोड हो रहा है...' : 'Loading prices...',
+                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14)),
+                            ],
+                          )
                         : Text(
-                            _isHindi
-                                ? 'मंडी भाव देखें'
-                                : 'CHECK MANDI PRICES',
-                            style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                                letterSpacing: 1)),
+                            _isHindi ? 'मंडी भाव देखें 🌾' : 'CHECK MANDI PRICES 🌾',
+                            style: const TextStyle(color: Colors.black,
+                                fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
+                          ),
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 28),
 
-              // Popular Crops
               Text(_isHindi ? 'लोकप्रिय फसलें' : 'POPULAR CROPS',
-                  style: const TextStyle(
-                      color: Color(0xFF52B788),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5)),
+                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                      fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 8, runSpacing: 8,
                 children: _popularCrops.map((crop) {
                   return GestureDetector(
                     onTap: () {
@@ -496,35 +538,31 @@ if (!_isListening)
                       _updateVarieties(crop);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A2744),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: const Color(0xFF52B788)
-                                .withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
                       ),
                       child: Text(
                         _isHindi ? (_cropHindi[crop] ?? crop) : crop,
-                        style: const TextStyle(
-                            color: Color(0xFF95D5B2), fontSize: 13),
+                        style: const TextStyle(color: Color(0xFF95D5B2), fontSize: 13),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 28),
 
               Center(
                 child: Text(
                   _isHindi
                       ? 'डेटा स्रोत: AGMARKNET • कृषि मंत्रालय, भारत'
-                      : 'Data source: AGMARKNET • Ministry of Agriculture',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.3), fontSize: 11),
+                      : 'Data: AGMARKNET • Ministry of Agriculture, India',
+                  style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 11),
                 ),
               ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
