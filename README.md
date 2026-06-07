@@ -117,7 +117,6 @@ Packages:
   fl_chart          → Price comparison bar chart across mandis
   http              → AGMARKNET API calls
   shared_preferences → Local storage
-  url_launcher      → WhatsApp share
  
 No ML model used — advice is rule-based, calculated from
 live price comparisons and transport cost estimates.
