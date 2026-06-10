@@ -141,8 +141,11 @@ class _PriceResultScreenState extends State<PriceResultScreen>
     final decision = DecisionEngine.analyze(widget.prices);
     final String advice = decision['advice'] as String;
     final CropPrice? best = decision['bestMandi'] as CropPrice?;
-    final List<String> reasons = List<String>.from(decision['reasons'] as List);
-    final int count = decision['mandiCount'] as int;
+final List<String> reasons = List<String>.from(
+  widget.isHindi && decision['reasonsHindi'] != null
+      ? decision['reasonsHindi'] as List
+      : decision['reasons'] as List
+);    final int count = decision['mandiCount'] as int;
     final double avg = decision['avgPrice'] as double;
     final double pct = decision['percentAboveAvg'] as double;
     final String smartLine = decision['smartLine'] as String;
@@ -804,7 +807,7 @@ class _PriceResultScreenState extends State<PriceResultScreen>
 
   Widget _buildAutoProfit(CropPrice best, double avg) {
     final dist = _getMandiDistance(best);
-    final qtyC = TextEditingController(text: '10');
+    final qtyC = TextEditingController();
     final resultN = ValueNotifier<String>('');
 
     void calculate(String qtyStr) {
@@ -818,8 +821,6 @@ class _PriceResultScreenState extends State<PriceResultScreen>
         resultN.value = '${wi ? "✅" : "❌"}|${np.toStringAsFixed(0)}|${tc.toStringAsFixed(0)}';
       }
     }
-
-    calculate('10');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -893,37 +894,38 @@ class _PriceResultScreenState extends State<PriceResultScreen>
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: pos ? const Color(0xFF52B788).withOpacity(0.4) : Colors.redAccent.withOpacity(0.4)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          pos
-                              ? (widget.isHindi ? '✅ यात्रा फायदेमंद है' : '✅ Worth the travel')
-                              : (widget.isHindi ? '❌ यात्रा फायदेमंद नहीं' : '❌ Not worth it'),
-                          style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.isHindi ? 'यात्रा खर्च: ₹$cost' : 'Travel cost: ₹$cost',
-                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('₹$profit',
-                            style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent, fontSize: 20, fontWeight: FontWeight.w900)),
-                        Text(widget.isHindi ? 'कुल लाभ' : 'net profit',
-                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
-                      ],
-                    ),
-                  ],
-                ),
-              );
+      child: Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          pos
+              ? (widget.isHindi ? '✅ यात्रा फायदेमंद है' : '✅ Worth the travel')
+              : (widget.isHindi ? '❌ यात्रा फायदेमंद नहीं' : '❌ Not worth it'),
+          style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent,
+              fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          widget.isHindi ? 'यात्रा खर्च: ₹$cost' : 'Travel cost: ₹$cost',
+          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11),
+        ),
+      ],
+    ),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text('₹$profit',
+            style: TextStyle(color: pos ? const Color(0xFF52B788) : Colors.redAccent,
+                fontSize: 22, fontWeight: FontWeight.w900)),
+        Text(widget.isHindi ? 'कुल लाभ' : 'net profit',
+            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+      ],
+    ),
+  ],
+),        );
             },
           ),
         ],

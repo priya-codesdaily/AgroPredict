@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/mandi_service.dart';
@@ -36,6 +36,31 @@ class _HomeScreenState extends State<HomeScreen> {
     'Mango': 'आम', 'Rice': 'चावल', 'Wheat': 'गेहूं',
     'Tomato': 'टमाटर', 'Potato': 'आलू', 'Onion': 'प्याज',
     'Cotton': 'कपास', 'Soybean': 'सोयाबीन',
+  };
+
+  final Map<String, String> _hindiToEnglish = {
+    'आम': 'Mango', 'चावल': 'Rice', 'धान': 'Rice',
+    'गेहूं': 'Wheat', 'गेहू': 'Wheat', 'गेंहू': 'Wheat',
+    'टमाटर': 'Tomato', 'आलू': 'Potato',
+    'प्याज': 'Onion', 'कपास': 'Cotton',
+    'सोयाबीन': 'Soybean', 'मक्का': 'Maize',
+    'मक्की': 'Maize', 'बाजरा': 'Bajra',
+    'ज्वार': 'Jowar', 'जवार': 'Jowar',
+    'अरहर': 'Arhar', 'मूंग': 'Moong',
+    'उड़द': 'Urad', 'मूंगफली': 'Groundnut',
+    'सरसों': 'Mustard', 'तिल': 'Sesame',
+    'हल्दी': 'Turmeric', 'अदरक': 'Ginger',
+    'लहसुन': 'Garlic', 'मिर्च': 'Chilli',
+    'बैंगन': 'Brinjal', 'भिंडी': 'Bhindi',
+    'ककड़ी': 'Cucumber', 'कद्दू': 'Pumpkin',
+    'करेला': 'Bitter Gourd', 'तरबूज': 'Watermelon',
+    'केला': 'Banana', 'पपीता': 'Papaya',
+    'अनार': 'Pomegranate', 'अंगूर': 'Grapes',
+    'सेब': 'Apple', 'संतरा': 'Orange',
+    'गन्ना': 'Sugarcane', 'कॉफी': 'Coffee',
+    'चाय': 'Tea', 'नारियल': 'Coconut',
+    'अमरूद': 'Guava', 'आड़ू': 'Peach',
+    'लीची': 'Litchi', 'जामुन': 'Jamun',
   };
 
   @override
@@ -90,6 +115,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'India';
   }
 
+  String _toEnglish(String crop) {
+    return _hindiToEnglish[crop.trim()] ?? crop.trim();
+  }
+
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -103,9 +132,13 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isListening = true);
       await _speech.listen(
         onResult: (result) {
+          final spoken = result.recognizedWords.trim();
+          final english = _toEnglish(spoken);
           setState(() {
-            _cropController.text = result.recognizedWords;
-            _updateVarieties(result.recognizedWords);
+            _cropController.text = _isHindi
+                ? (_cropHindi[english] ?? spoken)
+                : english;
+            _updateVarieties(english);
           });
         },
         localeId: _isHindi ? 'hi_IN' : 'en_IN',
@@ -128,9 +161,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _updateVarieties(String cropName) {
+    final english = _toEnglish(cropName.trim());
     setState(() {
-      _showVarieties = CropVarieties.hasVarieties(cropName.trim());
-      _currentVarieties = CropVarieties.getVarieties(cropName.trim());
+      _showVarieties = CropVarieties.hasVarieties(english);
+      _currentVarieties = CropVarieties.getVarieties(english);
       _selectedVariety = '';
     });
   }
@@ -149,13 +183,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     setState(() => _isLoading = true);
 
-    String baseCrop = _cropController.text.trim();
+    final raw = _cropController.text.trim();
+    final englishCrop = _toEnglish(raw);
+
     String searchCrop = _selectedVariety.isNotEmpty && !_selectedVariety.startsWith('All')
-        ? '$baseCrop $_selectedVariety'
-        : baseCrop;
-    String displayName = _selectedVariety.isNotEmpty && !_selectedVariety.startsWith('All')
-        ? '$baseCrop · $_selectedVariety'
-        : baseCrop;
+        ? '$englishCrop $_selectedVariety'
+        : englishCrop;
+
+    String displayName = _isHindi
+        ? (_cropHindi[englishCrop] ?? raw)
+        : englishCrop;
+    if (_selectedVariety.isNotEmpty && !_selectedVariety.startsWith('All')) {
+      displayName += ' · $_selectedVariety';
+    }
 
     List<CropPrice> prices = [];
     String? errorMsg;
@@ -176,7 +216,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (errorMsg != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isHindi ? 'लाइव डेटा नहीं मिला। सैंपल डेटा दिखा रहे हैं।' : 'Live data unavailable. Showing sample data.'),
+            content: Text(_isHindi
+                ? 'लाइव डेटा नहीं मिला। सैंपल डेटा दिखा रहे हैं।'
+                : 'Live data unavailable. Showing sample data.'),
             backgroundColor: Colors.orangeAccent.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -266,15 +308,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 10),
 
-              // Status badges row
+              // Status badges
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
                     child: Text(
                       _isHindi ? '● लाइव मंडी भाव' : '● LIVE MANDI PRICES',
                       style: const TextStyle(color: Color(0xFF52B788), fontSize: 10, fontWeight: FontWeight.bold),
@@ -284,25 +323,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _userLat != null
-                          ? const Color(0xFF52B788).withOpacity(0.15)
-                          : Colors.white10,
+                      color: _userLat != null ? const Color(0xFF52B788).withOpacity(0.15) : Colors.white10,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _userLat != null
-                            ? const Color(0xFF52B788).withOpacity(0.5)
-                            : Colors.transparent,
+                        color: _userLat != null ? const Color(0xFF52B788).withOpacity(0.5) : Colors.transparent,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _locationLoading
-                              ? Icons.location_searching
-                              : _userLat != null
-                                  ? Icons.location_on
-                                  : Icons.location_off,
+                          _locationLoading ? Icons.location_searching
+                              : _userLat != null ? Icons.location_on : Icons.location_off,
                           color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
                           size: 12,
                         ),
@@ -354,9 +386,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
                       fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 8),
+
               TextField(
                 controller: _cropController,
-                onChanged: _updateVarieties,
+                onChanged: (val) => _updateVarieties(val),
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: _isHindi ? 'जैसे: आम, चावल, गेहूं' : 'e.g. Mango, Rice, Wheat',
@@ -375,9 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       margin: const EdgeInsets.all(8),
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: _isListening
-                            ? Colors.redAccent.withOpacity(0.2)
-                            : const Color(0xFF52B788).withOpacity(0.1),
+                        color: _isListening ? Colors.redAccent.withOpacity(0.2) : const Color(0xFF52B788).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -389,6 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.only(top: 5, left: 4),
                 child: Row(
@@ -396,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Icon(Icons.mic_none, color: Color(0xFF52B788), size: 11),
                     const SizedBox(width: 4),
                     Text(
-                      _isHindi ? 'माइक दबाएं और फसल का नाम बोलें' : 'Tap mic to speak crop name',
+                      _isHindi ? 'माइक दबाएं और हिंदी में फसल का नाम बोलें' : 'Tap mic to speak crop name',
                       style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
                     ),
                   ],
@@ -417,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Icon(Icons.mic, color: Colors.redAccent, size: 16),
                       const SizedBox(width: 8),
                       Text(
-                        _isHindi ? 'सुन रहा हूँ... बोलिए 🎤' : 'Listening... speak now 🎤',
+                        _isHindi ? 'सुन रहा हूँ... हिंदी में बोलें 🎤' : 'Listening... speak now 🎤',
                         style: const TextStyle(color: Colors.redAccent, fontSize: 13),
                       ),
                     ],
@@ -478,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _stateController,
                 style: const TextStyle(color: Colors.white, fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: _isHindi ? 'जैसे: ओडिशा, महाराष्ट्र' : 'e.g. Odisha, Maharashtra',
+                  hintText: _isHindi ? 'जैसे: झारखंड, ओडिशा' : 'e.g. Jharkhand, Odisha',
                   hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                   filled: true,
                   fillColor: const Color(0xFF1A2744),
@@ -498,9 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: _isLoading
-                        ? const Color(0xFF52B788).withOpacity(0.6)
-                        : const Color(0xFF52B788),
+                    color: _isLoading ? const Color(0xFF52B788).withOpacity(0.6) : const Color(0xFF52B788),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
@@ -534,7 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: _popularCrops.map((crop) {
                   return GestureDetector(
                     onTap: () {
-                      _cropController.text = crop;
+                      _cropController.text = _isHindi ? (_cropHindi[crop] ?? crop) : crop;
                       _updateVarieties(crop);
                     },
                     child: Container(
@@ -556,9 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               Center(
                 child: Text(
-                  _isHindi
-                      ? 'डेटा स्रोत: AGMARKNET • कृषि मंत्रालय, भारत'
-                      : 'Data: AGMARKNET • Ministry of Agriculture, India',
+                  _isHindi ? 'डेटा स्रोत: AGMARKNET • कृषि मंत्रालय, भारत' : 'Data: AGMARKNET • Ministry of Agriculture, India',
                   style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 11),
                 ),
               ),

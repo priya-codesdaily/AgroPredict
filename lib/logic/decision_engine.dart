@@ -33,20 +33,29 @@ class DecisionEngine {
       advice = 'NEUTRAL';
     }
 
-    List<String> reasons = [];
-    if (advice == 'SELL') {
-      reasons.add('Price is ${percentAboveAvg.toStringAsFixed(0)}% higher than nearby markets');
-      reasons.add('Best rate found in ${bestMandi.market}');
-      reasons.add('Good time to sell — prices are stable');
-    } else if (advice == 'WAIT') {
-      reasons.add('Average price is currently below normal');
-      reasons.add('Monitor daily — prices could improve');
-      reasons.add('Sell only if storage cost is high');
-    } else {
-      reasons.add('Prices are similar across all mandis');
-      reasons.add('Monitor for 2-3 more days before deciding');
-    }
+List<String> reasons = [];
+List<String> reasonsHindi = [];
 
+if (advice == 'SELL') {
+  reasons.add('Price is ${percentAboveAvg.toStringAsFixed(0)}% higher than nearby markets');
+  reasons.add('Best rate found in ${bestMandi.market}');
+  reasons.add('Good time to sell — prices are stable');
+  reasonsHindi.add('दाम ${percentAboveAvg.toStringAsFixed(0)}% ज़्यादा है पास की मंडियों से');
+  reasonsHindi.add('${bestMandi.market} में सबसे अच्छा दाम मिला है');
+  reasonsHindi.add('बेचने का सही समय है — दाम स्थिर हैं');
+} else if (advice == 'WAIT') {
+  reasons.add('Average price is currently below normal');
+  reasons.add('Monitor daily — prices could improve');
+  reasons.add('Sell only if storage cost is high');
+  reasonsHindi.add('अभी औसत दाम सामान्य से कम है');
+  reasonsHindi.add('रोज़ देखते रहें — दाम बेहतर हो सकते हैं');
+  reasonsHindi.add('केवल तभी बेचें जब रखने का खर्च ज़्यादा हो');
+} else {
+  reasons.add('Prices are similar across all mandis');
+  reasons.add('Monitor for 2-3 more days before deciding');
+  reasonsHindi.add('सभी मंडियों में दाम लगभग एक जैसे हैं');
+  reasonsHindi.add('फैसला करने से पहले 2-3 दिन और देखें');
+}
     String smartLine;
     String smartLineHindi;
     if (advice == 'SELL') {
