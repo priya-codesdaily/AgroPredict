@@ -31,7 +31,7 @@ AgroPredict gives them that comparison.
  
 ## 🎬 Demo
  
-> [Watch the full documentary — 13 farmers, real problem, real app](YOUR_YOUTUBE_LINK_HERE)
+> [Watch the full documentary — farmers from odisha and jharkhand, real problem, real app] https://youtu.be/2PWweDEcCpc?si=cPlrpFRrHcILGeG2
  
 **Flow:** Enter crop in Hindi → Select variety → GPS finds nearest mandi → See SELL/WAIT advice → Hear result aloud → Calculate transport profit
  
