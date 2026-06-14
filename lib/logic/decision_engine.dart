@@ -49,9 +49,16 @@ class DecisionEngine {
 
     String smartLine, smartLineHindi;
     if (advice == 'SELL') {
-      if (percentAboveAvg > 30) { smartLine = 'Unusually high price — sell immediately'; smartLineHindi = 'असामान्य रूप से ऊँचा दाम — तुरंत बेचें'; }
-      else if (percentAboveAvg > 20) { smartLine = 'Strong demand detected — good time to sell'; smartLineHindi = 'ज़्यादा माँग है — अभी बेचना फायदेमंद है'; }
-      else { smartLine = 'Stable price — sell now to avoid future risk'; smartLineHindi = 'दाम स्थिर है — अभी बेचो'; }
+      if (percentAboveAvg > 30) {
+        smartLine = 'Unusually high price — sell immediately';
+        smartLineHindi = 'असामान्य रूप से ऊँचा दाम — तुरंत बेचें';
+      } else if (percentAboveAvg > 20) {
+        smartLine = 'Strong demand detected — good time to sell';
+        smartLineHindi = 'ज़्यादा माँग है — अभी बेचना फायदेमंद है';
+      } else {
+        smartLine = 'Stable price — sell now to avoid future risk';
+        smartLineHindi = 'दाम स्थिर है — अभी बेचो';
+      }
     } else if (advice == 'WAIT') {
       smartLine = 'Prices below average this week. Monitor before selling.';
       smartLineHindi = 'इस हफ्ते दाम औसत से कम हैं। बेचने से पहले देखते रहें।';
@@ -76,13 +83,17 @@ class DecisionEngine {
     double costPerKm = 10.0,
   }) {
     double transportCost = distance * costPerKm;
-    double extraEarnings = (price - avgPrice) * quantity;
-    double netGain = extraEarnings - transportCost;
-    bool worthIt = netGain > 0;
+    double totalEarnings = price * quantity;
+    double netInHand = totalEarnings - transportCost;
+    double localEarnings = avgPrice * quantity;
+    double extraVsLocal = netInHand - localEarnings;
+    bool worthIt = netInHand > localEarnings;
     return {
       'transportCost': transportCost,
-      'extraEarnings': extraEarnings,
-      'netGain': netGain,
+      'totalEarnings': totalEarnings,
+      'netInHand': netInHand,
+      'localEarnings': localEarnings,
+      'extraVsLocal': extraVsLocal,
       'worthIt': worthIt,
     };
   }
@@ -94,7 +105,8 @@ class DecisionEngine {
       final coords = MandiLocations.getCoordinates(price.market);
       double? distance;
       if (coords != null) {
-        distance = Geolocator.distanceBetween(userLat, userLng, coords['lat']!, coords['lng']!) / 1000;
+        distance = Geolocator.distanceBetween(
+            userLat, userLng, coords['lat']!, coords['lng']!) / 1000;
       }
       result.add({'price': price, 'distance': distance, 'hasLocation': coords != null});
     }
@@ -107,19 +119,26 @@ class DecisionEngine {
     return result;
   }
 
-  static Map<String, dynamic>? getNearestMandi(List<CropPrice> prices, double userLat, double userLng) {
+  static Map<String, dynamic>? getNearestMandi(
+      List<CropPrice> prices, double userLat, double userLng) {
     final list = getMandisWithDistance(prices, userLat, userLng);
     final known = list.where((m) => m['distance'] != null).toList();
     if (known.isEmpty) return null;
-    known.sort((a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
+    known.sort((a, b) =>
+        (a['distance'] as double).compareTo(b['distance'] as double));
     return known.first;
   }
 
-  static Map<String, dynamic>? getBestNearbyMandi(List<CropPrice> prices, double userLat, double userLng, {double maxKm = 500}) {
+  static Map<String, dynamic>? getBestNearbyMandi(
+      List<CropPrice> prices, double userLat, double userLng,
+      {double maxKm = 500}) {
     final list = getMandisWithDistance(prices, userLat, userLng);
-    final nearby = list.where((m) => m['distance'] == null || (m['distance'] as double) <= maxKm).toList();
+    final nearby = list.where((m) =>
+        m['distance'] == null || (m['distance'] as double) <= maxKm).toList();
     if (nearby.isEmpty) return null;
-    nearby.sort((a, b) => (b['price'] as CropPrice).modalPrice.compareTo((a['price'] as CropPrice).modalPrice));
+    nearby.sort((a, b) =>
+        (b['price'] as CropPrice).modalPrice
+            .compareTo((a['price'] as CropPrice).modalPrice));
     return nearby.first;
   }
 }
