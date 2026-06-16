@@ -1,122 +1,186 @@
-# 📋 Field Research Notes — AgroPredict
+# 🌾 AgroPredict — Field Insights & Product Notes
 
-> These notes document the informal conversations and observations that shaped AgroPredict's features. This is not formal academic research — it is product discovery through direct farmer conversations.
-
----
-
-## Research Scope
-
-| | |
-|---|---|
-| **Location** | Odisha & Jharkhand (border region) |
-| **Participants** | Farmers, family members managing farm sales, local market visitors |
-| **Method** | Informal conversations, direct observation, app testing sessions |
-| **Goal** | Understand the selling challenges farmers face after harvest |
-| **Personal context** | Grew up in a farming family — father grows crops, mother handles selling decisions |
+*Collected by Anshu Priya through direct conversations with 10+ farmers and suppliers across Odisha and Jharkhand. Ongoing — still visiting, still learning.*
 
 ---
 
-## Key Findings
+## Who I Talked To
 
-### Finding 1 — Farmers focus on profit, not price
+Both farmers and suppliers — because both connect to the same problem from different sides.
 
-Most farmers think about how much money reaches their hands after the trip — not just the mandi rate displayed on a board.
+- **Farmers** — who grow crops and struggle to find the right buyer at the right price
+- **Suppliers** — who buy from farmers and sell further up the chain, often at significantly higher prices
 
-**Observation:** A farmer with 20 quintals of rice would rather sell at ₹1600/qtl at a nearby mandi than ₹1800/qtl at one 350km away — if transport costs ₹3500.
-
-**Impact on product:** Built the transport profit calculator. GPS auto-fills the distance. App calculates net profit before the farmer makes the trip.
-
----
-
-### Finding 2 — Farmers think in crop varieties, not general crop names
-
-Asking "which crop?" is not enough. Farmers identify their produce by variety — and prices differ significantly between varieties.
-
-**Observations:**
-- "Which rice?" — first question from my mother on first use
-- Basmati, Sona Masuri, Common rice have different market rates
-- Different mango varieties (Alphonso, Langra, Dussehri) sell at different prices
-
-**Impact on product:** Added variety selector. Farmers can now specify Rice — Basmati, Rice — Common, etc. Feature was shipped within 24 hours of feedback.
+Understanding both sides revealed why the information gap exists and who profits from it.
 
 ---
 
-### Finding 3 — Voice is easier than typing
+## The Real Problem
 
-Several farmers said reading was difficult. Typing crop names in English was a barrier. Hindi voice input reduced friction significantly.
+Most people assume farmers need better technology. That is not what farmers said.
 
-**Direct feedback:** *"Padhne mein dikkat hota hai"* (Reading is difficult for me)
+What farmers actually lack:
+- Where to sell
+- To whom to sell
+- Whether the trip is worth the cost
+- Whether they are getting a fair price at all
 
-**Impact on product:** Added voice input for crop name entry. Added voice output — app reads the advice aloud in Hindi so farmers hear the result without needing to read the screen.
-
----
-
-### Finding 4 — Farmers rarely compare markets
-
-Almost every farmer sells at the nearest local mandi — not because it's the best price, but because they have no easy way to compare alternatives.
-
-**Observation:** Farmers in our area were selling mangoes at ₹1500/qtl locally. The same crop was fetching ₹1800/qtl at Berhampur — 347km away. After transport cost calculation, the trip was still profitable by ₹200/qtl.
-
-**Impact on product:** Built the mandi comparison system. Shows all nearby mandis with prices, distances, and a BEST badge on the highest-value option.
+Because of this gap, farmers often sell to whoever shows up first — at whatever price is offered.
 
 ---
 
-### Finding 5 — Market information directly creates earning opportunity
+## How the Money Actually Flows
 
-Farmers who knew about price differences made better decisions. The information gap was the primary problem — not lack of access to markets.
+This is what I observed in the field:
 
-**Impact on product:** The entire app is built around this insight. Price transparency is the core value proposition.
+```
+Farmer sells at ₹20/kg to first available buyer
+↓
+Small supplier buys at ₹20, sells at ₹50–60 to larger supplier
+↓
+Large supplier sells further at higher price
+↓
+Wholesale market / export
+```
+
+The farmer does all the hard work. The supplier does the market navigation.
+
+**The difference is not effort. The difference is information and contacts.**
 
 ---
 
-### Finding 6 — Small farmers lack market connections
+## The Cost of Growing Is Real
 
-Larger farmers have contacts, agents, and networks. Small farmers often sell to whoever arrives first — with little negotiating power.
+Farmers spend money before a single rupee comes back:
 
-**Impact on product:** The mandi comparison feature helps level this information gap without requiring personal connections.
+- Tractor work: ₹1,200 per hour
+- Seeds: ₹1,000+
+- Crop protection chemicals: ₹500+
+- Daily watering: 2 hours every day
+- Harvesting labour costs
+
+After all of this — they sometimes sell at ₹20/kg or less. They do not even recover what they spent.
+
+**The problem is not that farmers do not work hard. The problem is that they sell without knowing what a fair price looks like or where a better buyer exists.**
 
 ---
 
-## Product Decisions Table
+## Why Suppliers Earn More
 
-| Observation | Feature Built |
-|---|---|
-| Farmers care about profit after transport | Transport profit calculator |
-| Farmers think in varieties | Crop variety selector |
-| Reading difficulty in the field | Voice output on advice screen |
-| No easy way to compare mandis | Multi-mandi comparison with distance |
-| Data freshness matters for trust | Price date shown on every result |
-| Hindi more accessible than English | Full Hindi UI |
+Suppliers can travel to other states to sell because they know the buyers there. They have contacts. They know the margins.
+
+Farmers fear travelling far because:
+- They do not know if the price will be better
+- They do not know if the transport cost will eat the profit
+- They have no buyer contact at the destination
+
+A supplier goes wherever the profit is — because he knows in advance it will be worth it.
+
+**If a farmer had the same information — transport cost, current market price, buyer contact, profit calculation — they could make the same decision.**
+
+---
+
+## What AgroPredict Can Do About This
+
+Current features address part of the problem:
+
+✅ Live mandi prices via AGMARKNET — farmer sees where prices are better  
+✅ Transport profit calculator — farmer knows if the trip is worth it before going  
+✅ Mandi comparison — not just nearest, but best profit after travel  
+✅ Crop variety selection — because Basmati and Common rice are different decisions  
+✅ Voice support in Hindi — because not everyone reads well  
+
+What is still missing and matters most: **supplier contacts and buyer discovery**
+
+Knowing the price at another mandi is useful. Knowing who to sell to when you get there is what completes the decision.
+
+---
+
+## The Overstock Problem
+
+When too many farmers harvest the same crop at the same time, prices fall. Buyers gain power. Farmers sell quickly to avoid spoilage — especially for perishables like mango, tomato, litchi, banana.
+
+The overstock problem is also a supplier contact problem. If farmers had access to more buyers, produce would not pile up in one market.
+
+---
+
+## The Rainy Season Problem
+
+Rain affects everything:
+- Spoilage speeds up
+- Transport becomes difficult or impossible
+- Quality drops
+- Farmers must sell fast at whatever price exists
+
+This creates predictable seasonal losses for farmers who cannot reach alternative markets quickly.
+
+---
+
+## What Farmers Actually Said
+
+Direct feedback from conversations:
+
+| What they said | What it meant | What I built |
+|---|---|---|
+| *"Which variety?"* | Generic crop names are not enough | Variety selector |
+| *"Padhne mein dikkat hota hai"* | Reading is a barrier | Voice input and voice output |
+| *"Profit nahi hota, mehnat ka faal nahi milta"* | Hard work does not translate to earnings | Transport profit calculator |
+| *"Kitna kg mein?"* | Price per kg is more intuitive than per quintal | ₹/kg toggle |
+
+---
+
+## What I Learned About Accessibility
+
+Not everyone is educated. Not everyone understands Hindi fluently. Many big sellers are not active on mobile at all — they rely on personal networks and phone calls.
+
+The farmers who are most active on mobile are often the smaller ones who need the most help.
+
+**Accessibility is not a feature. It is the foundation.**
+
+---
+
+## On AI and Technology
+
+Farmers did not ask for AI, machine learning, or charts. They asked for simple, reliable information they can act on immediately.
+
+This does not mean AI has no future here. It means the foundation must be right first — accurate prices, clear profit calculations, accessible interface, trustworthy data.
+
+Once farmers trust the tool, more sophisticated features become possible. But trust comes from usefulness, not from technology.
+
+---
+
+## The Bigger Opportunity
+
+AgroPredict started as a price comparison tool. The field research shows the real opportunity is larger:
+
+**Helping farmers connect to the right buyers, at the right price, at the right time — so their hard work actually turns into profit.**
+
+This includes:
+- Market price information ✅ (built)
+- Transport profit calculation ✅ (built)
+- Mandi comparison ✅ (built)
+- Supplier/buyer contacts — future
+- Seasonal price trends — planned
+- Weather-aware selling advice — planned
 
 ---
 
 ## Current Limitations
 
-- Geographic coverage limited to mandis in our curated database (~70+ cities)
-- Sample size is small — conversations with farmers in Odisha and Jharkhand
-- Distance is estimated from GPS coordinates, not actual road distance
-- Price data freshness varies by mandi — some update daily, some less frequently
-- Features are still being tested and improved based on ongoing feedback
+- Geographic coverage limited to our curated mandi database
+- Distance is estimated — not actual road distance
+- Supplier contact feature not yet built
+- Sample size is small — conversations ongoing
+- Not all farmers are comfortable with mobile apps
 
 ---
 
-## Next Research Areas
+## Long-Term Mission
 
-Based on farmer conversations, these are the next areas to investigate:
+> *"Help farmers understand where, when, and to whom they should sell — so that their hard work turns into profit."*
 
-- **Shared transport** — farmers already coordinate informally; an app feature could formalise this
-- **Weather impact** — rain affects transport decisions for perishable crops
-- **Price history** — farmers want to know if today's price is high or low compared to recent weeks
-- **Buyer discovery** — finding who is buying is often harder than finding the price
+Every future feature should support this mission.
 
 ---
 
-## Notes on Method
-
-These conversations were informal. I visited farms, asked questions, watched farmers interact with the app, and noted what confused them or what they asked for. No formal survey was conducted. The insights here are qualitative observations, not statistically representative findings.
-
-The goal was not to produce research — it was to build something that actually helps.
-
----
-
-*Last updated: June 2026 · Anshu Priya · github.com/priya-codesdaily*
+*Last updated: June 2026 · Anshu Priya · Still visiting farms · github.com/priya-codesdaily/agropredict*
