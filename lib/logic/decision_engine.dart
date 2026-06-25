@@ -1,4 +1,4 @@
-import 'package:geolocator/geolocator.dart';
+﻿import 'package:geolocator/geolocator.dart';
 import '../models/crop_model.dart';
 import '../data/mandi_locations.dart';
 
@@ -74,29 +74,29 @@ class DecisionEngine {
       'smartLine': smartLine, 'smartLineHindi': smartLineHindi,
     };
   }
-
-  static Map<String, dynamic> calculateProfit({
-    required double price,
-    required double quantity,
-    required double distance,
-    required double avgPrice,
-    double costPerKm = 10.0,
-  }) {
-    double transportCost = distance * costPerKm;
-    double totalEarnings = price * quantity;
-    double netInHand = totalEarnings - transportCost;
-    double localEarnings = avgPrice * quantity;
-    double extraVsLocal = netInHand - localEarnings;
-    bool worthIt = netInHand > localEarnings;
-    return {
-      'transportCost': transportCost,
-      'totalEarnings': totalEarnings,
-      'netInHand': netInHand,
-      'localEarnings': localEarnings,
-      'extraVsLocal': extraVsLocal,
-      'worthIt': worthIt,
-    };
-  }
+static Map<String, dynamic> calculateProfit({
+  required double price,
+  required double quantity,
+  required double distance,
+  required double avgPrice,
+  double costPerKm = 12.0,
+}) {
+  double transportCost = distance * costPerKm;
+  double totalEarnings = price * quantity;
+  double netInHand = totalEarnings - transportCost;
+  double localEarnings = avgPrice * quantity;
+  double netGain = netInHand - localEarnings;
+  bool worthIt = netInHand > localEarnings;
+  return {
+    'transportCost': transportCost,
+    'totalEarnings': totalEarnings,
+    'netInHand': netInHand,
+    'localEarnings': localEarnings,
+    'netGain': netGain,
+    'extraEarnings': netGain,
+    'worthIt': worthIt,
+  };
+}
 
   static List<Map<String, dynamic>> getMandisWithDistance(
       List<CropPrice> prices, double userLat, double userLng) {
