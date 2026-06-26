@@ -5,13 +5,13 @@ import '../services/mandi_service.dart';
 import '../models/crop_model.dart';
 import '../models/crop_varieties.dart';
 import 'price_result_screen.dart';
+import 'shared_transport_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
-
 class _HomeScreenState extends State<HomeScreen> {
   final _cropController = TextEditingController();
   final _stateController = TextEditingController();
@@ -553,6 +553,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SharedTransportScreen(
+          cropName: 'Calculate Savings',
+          prices: [],
+          isHindi: _isHindi,
+        ),
+      ),
+    );
+  },
+  child: Container(
+    width: double.infinity,
+    height: 58,
+    decoration: BoxDecoration(
+      color: Colors.orangeAccent,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🚛 ', style: TextStyle(fontSize: 20)),
+          Text(
+            _isHindi ? 'साझा परिवहन' : 'SHARED TRANSPORT',
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
               const SizedBox(height: 28),
 
               Text(_isHindi ? 'लोकप्रिय फसलें' : 'POPULAR CROPS',
