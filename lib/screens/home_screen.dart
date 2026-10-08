@@ -4,14 +4,17 @@ import 'package:geolocator/geolocator.dart';
 import '../services/mandi_service.dart';
 import '../models/crop_model.dart';
 import '../models/crop_varieties.dart';
+import '../theme/app_colors.dart';
 import 'price_result_screen.dart';
 import 'shared_transport_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
+
 class _HomeScreenState extends State<HomeScreen> {
   final _cropController = TextEditingController();
   final _stateController = TextEditingController();
@@ -243,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1628),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -252,13 +255,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const SizedBox(height: 16),
 
-              // Header
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4332),
+                      color: AppColors.primaryDark,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text('🌾', style: TextStyle(fontSize: 28)),
@@ -268,18 +270,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                                              const Text(
+                        const Text(
                           'Kshetraajeev',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textDark,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
+                        const Text(
                           'Smart Market Decisions for Farmers',
                           style: TextStyle(
-                            color: Color(0xFF52B788),
+                            color: AppColors.tagline,
                             fontSize: 12,
                           ),
                         ),
@@ -291,12 +293,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: !_isHindi ? const Color(0xFF52B788) : Colors.white10,
+                        color: !_isHindi ? AppColors.primary : AppColors.chipBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('EN',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-                              color: !_isHindi ? Colors.black : Colors.white)),
+                              color: !_isHindi ? Colors.white : AppColors.textMuted)),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -305,37 +307,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _isHindi ? const Color(0xFF52B788) : Colors.white10,
+                        color: _isHindi ? AppColors.primary : AppColors.chipBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text('हिंदी',
                           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-                              color: _isHindi ? Colors.black : Colors.white)),
+                              color: _isHindi ? Colors.white : AppColors.textMuted)),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
 
-              // Status badges
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: AppColors.chipBg, borderRadius: BorderRadius.circular(20)),
                     child: Text(
                       _isHindi ? '● लाइव मंडी भाव' : '● LIVE MANDI PRICES',
-                      style: const TextStyle(color: Color(0xFF52B788), fontSize: 10, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _userLat != null ? const Color(0xFF52B788).withOpacity(0.15) : Colors.white10,
+                      color: AppColors.chipBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: _userLat != null ? const Color(0xFF52B788).withOpacity(0.5) : Colors.transparent,
+                        color: _userLat != null ? AppColors.borderGreen : Colors.transparent,
                       ),
                     ),
                     child: Row(
@@ -344,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(
                           _locationLoading ? Icons.location_searching
                               : _userLat != null ? Icons.location_on : Icons.location_off,
-                          color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                          color: _userLat != null ? AppColors.primary : AppColors.textMuted,
                           size: 12,
                         ),
                         const SizedBox(width: 4),
@@ -355,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? '📍 ${_locationName.isNotEmpty ? _locationName : "GPS Active"}'
                                   : (_isHindi ? 'GPS बंद' : 'GPS off'),
                           style: TextStyle(
-                            color: _userLat != null ? const Color(0xFF52B788) : Colors.white38,
+                            color: _userLat != null ? AppColors.primary : AppColors.textMuted,
                             fontSize: 10,
                           ),
                         ),
@@ -366,13 +367,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Info card
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4332).withOpacity(0.4),
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF52B788).withOpacity(0.25)),
+                  border: Border.all(color: AppColors.borderGreen),
                 ),
                 child: Row(
                   children: [
@@ -383,7 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _isHindi
                             ? 'फसल का नाम डालें या बोलें — किस्म चुनें — GPS से नज़दीकी मंडी देखें'
                             : 'Enter crop name — select variety — GPS finds nearest mandi',
-                        style: const TextStyle(color: Color(0xFF95D5B2), fontSize: 13, height: 1.4),
+                        style: const TextStyle(color: AppColors.primaryDark, fontSize: 13, height: 1.4),
                       ),
                     ),
                   ],
@@ -392,37 +392,42 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
 
               Text(_isHindi ? 'फसल का नाम' : 'CROP NAME',
-                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                  style: const TextStyle(color: AppColors.primary, fontSize: 11,
                       fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 8),
 
               TextField(
                 controller: _cropController,
                 onChanged: (val) => _updateVarieties(val),
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: AppColors.textDark, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: _isHindi ? 'जैसे: आम, चावल, गेहूं' : 'e.g. Mango, Rice, Wheat',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle: const TextStyle(color: AppColors.textMuted),
                   filled: true,
-                  fillColor: const Color(0xFF1A2744),
+                  fillColor: AppColors.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderGreen)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderGreen)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF52B788), width: 1.5)),
-                  prefixIcon: const Icon(Icons.grass, color: Color(0xFF52B788)),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                  prefixIcon: const Icon(Icons.grass, color: AppColors.primary),
                   suffixIcon: GestureDetector(
                     onTap: _isListening ? _stopListening : _startListening,
                     child: Container(
                       margin: const EdgeInsets.all(8),
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: _isListening ? Colors.redAccent.withOpacity(0.2) : const Color(0xFF52B788).withOpacity(0.1),
+                        color: _isListening ? Colors.redAccent.withOpacity(0.15) : AppColors.chipBg,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         _isListening ? Icons.mic : Icons.mic_none,
-                        color: _isListening ? Colors.redAccent : const Color(0xFF52B788),
+                        color: _isListening ? Colors.redAccent : AppColors.primary,
                         size: 20,
                       ),
                     ),
@@ -434,11 +439,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.only(top: 5, left: 4),
                 child: Row(
                   children: [
-                    const Icon(Icons.mic_none, color: Color(0xFF52B788), size: 11),
+                    const Icon(Icons.mic_none, color: AppColors.primary, size: 11),
                     const SizedBox(width: 4),
                     Text(
                       _isHindi ? 'माइक दबाएं और हिंदी में फसल का नाम बोलें' : 'Tap mic to speak crop name',
-                      style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
                     ),
                   ],
                 ),
@@ -449,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.only(top: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.1),
+                    color: Colors.redAccent.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
                   ),
@@ -470,18 +475,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   margin: const EdgeInsets.only(top: 10),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A2744),
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
+                    border: Border.all(color: AppColors.borderGreen),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
-                        const Icon(Icons.category, color: Color(0xFF52B788), size: 14),
+                        const Icon(Icons.category, color: AppColors.primary, size: 14),
                         const SizedBox(width: 6),
                         Text(_isHindi ? 'किस्म चुनें (वैकल्पिक)' : 'Select variety (optional)',
-                            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11)),
+                            style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
                       ]),
                       const SizedBox(height: 10),
                       Wrap(
@@ -493,13 +498,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               decoration: BoxDecoration(
-                                color: selected ? const Color(0xFF52B788) : Colors.white10,
+                                color: selected ? AppColors.primary : AppColors.chipBg,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: selected ? const Color(0xFF52B788) : Colors.white24),
+                                border: Border.all(color: selected ? AppColors.primary : AppColors.borderGreen),
                               ),
                               child: Text(v,
                                   style: TextStyle(
-                                      color: selected ? Colors.black : Colors.white,
+                                      color: selected ? Colors.white : AppColors.textDark,
                                       fontSize: 13,
                                       fontWeight: selected ? FontWeight.bold : FontWeight.normal)),
                             ),
@@ -512,23 +517,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 16),
               Text(_isHindi ? 'राज्य (वैकल्पिक)' : 'STATE (OPTIONAL)',
-                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                  style: const TextStyle(color: AppColors.primary, fontSize: 11,
                       fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 8),
               TextField(
                 controller: _stateController,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: AppColors.textDark, fontSize: 16),
                 decoration: InputDecoration(
                   hintText: _isHindi ? 'जैसे: झारखंड, ओडिशा' : 'e.g. Jharkhand, Odisha',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                  hintStyle: const TextStyle(color: AppColors.textMuted),
                   filled: true,
-                  fillColor: const Color(0xFF1A2744),
+                  fillColor: AppColors.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderGreen)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderGreen)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF52B788), width: 1.5)),
-                  prefixIcon: const Icon(Icons.location_on, color: Color(0xFF52B788)),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                  prefixIcon: const Icon(Icons.location_on, color: AppColors.primary),
                 ),
               ),
               const SizedBox(height: 24),
@@ -539,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: double.infinity,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: _isLoading ? const Color(0xFF52B788).withOpacity(0.6) : const Color(0xFF52B788),
+                    color: _isLoading ? AppColors.primary.withOpacity(0.6) : AppColors.primary,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
@@ -548,64 +558,64 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const SizedBox(width: 20, height: 20,
-                                  child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)),
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
                               const SizedBox(width: 12),
                               Text(_isHindi ? 'डेटा लोड हो रहा है...' : 'Loading prices...',
-                                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14)),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
                             ],
                           )
                         : Text(
                             _isHindi ? 'मंडी भाव देखें 🌾' : 'CHECK MANDI PRICES 🌾',
-                            style: const TextStyle(color: Colors.black,
+                            style: const TextStyle(color: Colors.white,
                                 fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
                           ),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SharedTransportScreen(
-          cropName: 'Calculate Savings',
-          prices: [],
-          isHindi: _isHindi,
-        ),
-      ),
-    );
-  },
-  child: Container(
-    width: double.infinity,
-    height: 58,
-    decoration: BoxDecoration(
-      color: Colors.orangeAccent,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Center(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('🚛 ', style: TextStyle(fontSize: 20)),
-          Text(
-            _isHindi ? 'साझा परिवहन' : 'SHARED TRANSPORT',
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SharedTransportScreen(
+                        cropName: 'Calculate Savings',
+                        prices: [],
+                        isHindi: _isHindi,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.warning,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('🚛 ', style: TextStyle(fontSize: 20)),
+                        Text(
+                          _isHindi ? 'साझा परिवहन' : 'SHARED TRANSPORT',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 28),
 
               Text(_isHindi ? 'लोकप्रिय फसलें' : 'POPULAR CROPS',
-                  style: const TextStyle(color: Color(0xFF52B788), fontSize: 11,
+                  style: const TextStyle(color: AppColors.primary, fontSize: 11,
                       fontWeight: FontWeight.bold, letterSpacing: 1.5)),
               const SizedBox(height: 12),
               Wrap(
@@ -619,13 +629,13 @@ GestureDetector(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A2744),
+                        color: AppColors.chipBg,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF52B788).withOpacity(0.3)),
+                        border: Border.all(color: AppColors.borderGreen),
                       ),
                       child: Text(
                         _isHindi ? (_cropHindi[crop] ?? crop) : crop,
-                        style: const TextStyle(color: Color(0xFF95D5B2), fontSize: 13),
+                        style: const TextStyle(color: AppColors.primaryDark, fontSize: 13),
                       ),
                     ),
                   );
@@ -636,7 +646,7 @@ GestureDetector(
               Center(
                 child: Text(
                   _isHindi ? 'डेटा स्रोत: AGMARKNET • कृषि मंत्रालय, भारत' : 'Data: AGMARKNET • Ministry of Agriculture, India',
-                  style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 11),
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                 ),
               ),
               const SizedBox(height: 8),
