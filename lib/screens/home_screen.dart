@@ -268,11 +268,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('AgroPredict',
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                                              const Text(
+                          'Kshetraajeev',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         Text(
-                          _isHindi ? 'स्मार्ट फसल मूल्य सहायक' : 'Smart Crop Price Intelligence',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF52B788)),
+                          'Smart Market Decisions for Farmers',
+                          style: TextStyle(
+                            color: Color(0xFF52B788),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),

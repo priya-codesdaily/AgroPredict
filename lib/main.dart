@@ -12,7 +12,7 @@ class AgroPredictApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'AgroPredict',
+      title: 'Kshetraajeev',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0A1628),
       ),
