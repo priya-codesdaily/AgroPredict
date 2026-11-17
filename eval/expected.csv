@@ -1,0 +1,41 @@
+file,sentence,crop,quantity,unit
+01,मेरे पास बीस क्विंटल धान है,Rice,20,quintal
+02,मेरे पास पच्चीस क्विंटल आलू है,Potato,25,quintal
+03,दस क्विंटल टमाटर बेचना है,Tomato,10,quintal
+04,पचास किलो प्याज है,Onion,50,kg
+05,पांच क्विंटल गेहूं है,Wheat,5,quintal
+06,मेरे पास तीस क्विंटल आम है,Mango,30,quintal
+07,चालीस क्विंटल कपास है,Cotton,40,quintal
+08,मेरे पास पंद्रह क्विंटल सोयाबीन है,Soybean,15,quintal
+09,दस क्विंटल भिंडी है,Bhindi,10,quintal
+10,बीस किलो करेला है,Bitter Gourd,20,kg
+11,मेरे पास पचास किलो अनार है,Pomegranate,50,kg
+12,मेरे पास सौ क्विंटल धान है,Rice,100,quintal
+13,टमाटर का भाव क्या है,Tomato,,
+14,आलू कहां बेचूं,Potato,,
+15,मेरे पास 25 क्विंटल गेहूं है,Wheat,25,quintal
+16,मेरे पास दो क्विंटल प्याज है,Onion,2,quintal
+17,मेरे पास आठ क्विंटल टमाटर है,Tomato,8,quintal
+18,बारह क्विंटल आलू है,Potato,12,quintal
+19,तीन क्विंटल धान है,Rice,3,quintal
+20,मेरे पास अस्सी किलो गेहूं है,Wheat,80,kg
+21,I have twenty quintal rice,Rice,20,quintal
+22,I have thirty quintal potato,Potato,30,quintal
+23,I have fifty kg onion,Onion,50,kg
+24,I want to sell ten quintal tomato,Tomato,10,quintal
+25,I have five quintal wheat,Wheat,5,quintal
+26,Where should I sell my mango,Mango,,
+27,I have forty quintal cotton,Cotton,40,quintal
+28,I have 25 quintal soybean,Soybean,25,quintal
+29,I have two quintal bhindi,Bhindi,2,quintal
+30,I have a hundred kg pomegranate,Pomegranate,100,kg
+31,mere paas twenty quintal rice hai,Rice,20,quintal
+32,mere paas 10 quintal aloo hai,Potato,10,quintal
+33,tomato ka bhav kya hai,Tomato,,
+34,fifty kilo pyaz hai,Onion,50,kg
+35,mere paas thirty quintal gehu hai,Wheat,30,quintal
+36,mango kahan bechu,Mango,,
+37,mere paas ten quintal dhan hai,Rice,10,quintal
+38,mere paas fifteen quintal onion hai,Onion,15,quintal
+39,bhindi ka rate batao,Bhindi,,
+40,mere paas twenty kilo karela hai,Bitter Gourd,20,kg
