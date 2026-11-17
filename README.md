@@ -190,9 +190,33 @@ The backend calls these REST endpoints directly with `httpx`, and the key never 
 
 ## Testing
 
-- 17 unit tests cover the voice parser: Hindi and English sentences, digits and number words, kg and quintal, English speech written in Devanagari letters, and missing information.
+- 31 unit tests cover the voice parser: Hindi and English sentences, digits and number words, two-word numbers like "twenty five", kg and quintal, English speech written in Devanagari letters, spelling variants from the speech model, and missing information.
 - GitHub Actions runs `flutter test` on every push.
 - Not tested yet: the screens, the backend, and the decision logic.
+
+## Measured accuracy
+
+I recorded 40 sentences (20 Hindi, 10 English, 10 Hinglish), sent each one through the real backend to Gnani Prisma, and scored whether the app found the right crop, quantity and unit. The sentences are in `eval/expected.csv` and the transcripts Prisma returned are in `eval/transcripts.json`. The recordings themselves are not published.
+
+| Group | First run | After fixing the parser |
+|---|---|---|
+| Hindi | 10 of 20 | 17 of 20 |
+| English | 5 of 10 | 9 of 10 |
+| Hinglish | 7 of 10 | 8 of 10 |
+| **All** | **22 of 40 (55%)** | **34 of 40 (85%)** |
+
+Median time from sending a clip to getting the text back: 1.8 s (95th percentile 3.9 s).
+
+**What went wrong in the first run.** Of 18 failures, 12 were my parser's fault:
+- The speech model spells the same Hindi word in several ways (for example `गेहूँ` and `प्याज़`, with a chandrabindu or a dotted letter), and my word list had only one spelling.
+- My number list was missing words like दो, आठ, बारह and अस्सी.
+- "twenty five" was read as 20.
+
+I fixed these and added tests for each. The 6 failures that remain are speech recognition mistakes the parser cannot repair: "दस" heard as "कितना", "करेला" (bitter gourd) heard as "केला" (banana), "fifteen" heard as "fifty", "wheat" heard as "बी", a number dropped from a clip, and one clip returned in Punjabi script. This is why the app shows what it understood and asks the farmer to confirm before it answers.
+
+**An honest caveat.** I tuned the parser on these same 40 sentences, so 85% is optimistic for new speech. The sentences are one person's voice recordings, with a few different conditions, not a large or varied test.
+
+To rerun the scoring on the published transcripts: `flutter test test/eval_accuracy_test.dart`. To record your own clips, put them in `eval/clips/` named `01` to `40` and run `python eval/run_eval.py` with the backend running.
 
 ## What failed, and what I learned
 
@@ -205,6 +229,7 @@ The backend calls these REST endpoints directly with `httpx`, and the key never 
 | An early version had an API key hardcoded in the app. | Moved keys to environment variables and rotated them. | Secrets belong on the server. |
 | The mandi distance for Rourkela showed about 23 km, but the road is about 43 km. | Documented it as an estimate. | Straight-line distance is a rough guide only. |
 | I could not get wireless debugging to work, so the voice flow has only been tested in Chrome. | Android testing with the backend is still to do. | Test where the user is, not only where it is easy. |
+| My first accuracy test scored 55%. | Traced each failure: 12 were parser mistakes (spellings, number words), fixed them with tests; 6 were speech recognition mistakes. Now 85%. | Measure first, then fix, and separate your bugs from the model's. |
 
 ## Known limits
 
@@ -249,8 +274,8 @@ Open `http://127.0.0.1:8000/health`. You should see `"gnani_key_loaded": true`. 
 - [x] Shared transport calculator
 - [x] Gnani voice input and spoken answers
 - [x] Unit tests and CI
+- [x] Accuracy test on 40 spoken sentences (85%)
 - [ ] Live prices
-- [ ] Accuracy test on 40 spoken sentences
 - [ ] Backend hosted online, and an Android test of the voice flow
 - [ ] Odia language
 - [ ] Offline mode for low connectivity
