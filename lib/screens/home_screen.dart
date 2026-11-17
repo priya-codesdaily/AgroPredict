@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'voice_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/mandi_service.dart';
@@ -614,6 +615,48 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 28),
 
+                           const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                                       MaterialPageRoute(
+                      builder: (context) => VoiceScreen(
+                        isHindi: _isHindi,
+                        userLat: _userLat,
+                        userLng: _userLng,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.primary, width: 1.5),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.mic, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isHindi ? 'बोलकर पूछें' : 'SPEAK',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               Text(_isHindi ? 'लोकप्रिय फसलें' : 'POPULAR CROPS',
                   style: const TextStyle(color: AppColors.primary, fontSize: 11,
                       fontWeight: FontWeight.bold, letterSpacing: 1.5)),

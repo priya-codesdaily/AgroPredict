@@ -1,10 +1,13 @@
+﻿
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/crop_model.dart';
 
 class MandiService {
-  static const String _apiKey = '579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b';
-  static const String _baseUrl = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
+  static const String _apiKey =
+    String.fromEnvironment('DATA_GOV_API_KEY');
+  static const String _baseUrl =
+      'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
 
   static Future<List<CropPrice>> fetchPrices({
     required String cropName,
@@ -20,7 +23,7 @@ class MandiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['records'] != null && (data['records'] as List).isNotEmpty) {
-          return (data['records'] as List).map((r) => CropPrice.fromJson(r)).toList();
+                   return (data['records'] as List).map((r) => CropPrice.fromJson(r)).toList();
         }
       }
       return getMockData(cropName);
@@ -30,7 +33,7 @@ class MandiService {
   }
 
   static List<CropPrice> getMockData(String cropName) {
-    return [
+        return [
       CropPrice(cropName: cropName, market: 'Simdega', state: 'Jharkhand', district: 'Simdega', minPrice: 900, maxPrice: 1500, modalPrice: 1200, arrivalDate: '10/06/2026'),
       CropPrice(cropName: cropName, market: 'Chaibasa', state: 'Jharkhand', district: 'West Singhbhum', minPrice: 1000, maxPrice: 1600, modalPrice: 1300, arrivalDate: '10/06/2026'),
       CropPrice(cropName: cropName, market: 'Ranchi', state: 'Jharkhand', district: 'Ranchi', minPrice: 1100, maxPrice: 1800, modalPrice: 1500, arrivalDate: '10/06/2026'),
