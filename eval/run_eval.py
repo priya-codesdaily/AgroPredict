@@ -2,6 +2,7 @@ import csv
 import json
 import mimetypes
 import statistics
+import sys
 import time
 from pathlib import Path
 
@@ -10,7 +11,15 @@ import httpx
 HERE = Path(__file__).parent
 URL = "http://127.0.0.1:8000/stt"
 
-with open(HERE / "expected.csv", encoding="utf-8-sig", newline="") as f:
+# python eval/run_eval.py           -> the 40 tuned sentences
+# python eval/run_eval.py heldout   -> the 10 unseen sentences
+which = sys.argv[1] if len(sys.argv) > 1 else "main"
+if which == "heldout":
+    CSV_NAME, CLIPS_DIR, OUT_NAME = "expected_heldout.csv", "clips_heldout", "transcripts_heldout.json"
+else:
+    CSV_NAME, CLIPS_DIR, OUT_NAME = "expected.csv", "clips", "transcripts.json"
+
+with open(HERE / CSV_NAME, encoding="utf-8-sig", newline="") as f:
     rows = list(csv.DictReader(f))
 
 results = {}
@@ -19,7 +28,7 @@ latencies = []
 with httpx.Client(timeout=60) as client:
     for row in rows:
         num = row["file"].strip()
-        found = list((HERE / "clips").glob(num + ".*"))
+        found = list((HERE / CLIPS_DIR).glob(num + ".*"))
         if not found:
             print(f"{num}  no clip found")
             continue
@@ -52,7 +61,7 @@ with httpx.Client(timeout=60) as client:
         print(f"{num}  {seconds:4.2f}s  {text}")
         time.sleep(0.3)
 
-(HERE / "transcripts.json").write_text(
+(HERE / OUT_NAME).write_text(
     json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8"
 )
 

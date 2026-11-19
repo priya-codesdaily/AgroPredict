@@ -1,4 +1,4 @@
-# Parser accuracy on recorded sentences
+# Parser accuracy: tuned set
 
 | Group | Correct |
 |---|---|

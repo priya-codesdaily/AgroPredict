@@ -214,9 +214,19 @@ Median time from sending a clip to getting the text back: 1.8 s (95th percentile
 
 I fixed these and added tests for each. The 6 failures that remain are speech recognition mistakes the parser cannot repair: "दस" heard as "कितना", "करेला" (bitter gourd) heard as "केला" (banana), "fifteen" heard as "fifty", "wheat" heard as "बी", a number dropped from a clip, and one clip returned in Punjabi script. This is why the app shows what it understood and asks the farmer to confirm before it answers.
 
-**An honest caveat.** I tuned the parser on these same 40 sentences, so 85% is optimistic for new speech. The sentences are one person's voice recordings, with a few different conditions, not a large or varied test.
+**Unseen sentences.** I tuned the parser on those 40 sentences, so I then recorded 10 new ones and scored them once, without changing the parser.
 
-To rerun the scoring on the published transcripts: `flutter test test/eval_accuracy_test.dart`. To record your own clips, put them in `eval/clips/` named `01` to `40` and run `python eval/run_eval.py` with the backend running.
+| Set | Sentences | Correct |
+|---|---|---|
+| Tuned set (the parser was fixed using these) | 40 | 34 (85%) |
+| Unseen set (scored once, parser not changed) | 10 | 8 (80%) |
+
+The two failures on the unseen set:
+- "ग्यारह" (eleven) was heard as "क्या एक", so the quantity came out as 1. This is a speech recognition error, which the confirm card exists to catch.
+- "paddy" was written as "पेड़ी", a spelling my crop list did not have. This is a parser gap. I left it unfixed so the number stays honest, and a fix would need a new unseen set.
+
+**Caveat.** Ten sentences is a very small sample: 8 of 10 is consistent with a true accuracy anywhere between roughly 50% and 94%. The clips were recorded by me and parents, so this is not a varied test of accents or noisy fields. Read it as "around 80 to 85% on these sentences", not as an exact number.
+
 
 ## What failed, and what I learned
 
